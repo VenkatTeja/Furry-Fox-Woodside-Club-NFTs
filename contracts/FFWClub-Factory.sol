@@ -5,9 +5,9 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./interfaces/IFactoryERC721.sol";
-import "./NFT.sol";
+import "./FFWClub-NFT.sol";
 
-contract MyFactory is FactoryERC721, Ownable {
+contract FFWClubFactory is FactoryERC721, Ownable {
     using Strings for string;
 
     event Transfer(
@@ -18,12 +18,13 @@ contract MyFactory is FactoryERC721, Ownable {
 
     address public proxyRegistryAddress;
     address public nftAddress;
-    string public baseURI = "https://creatures-api.opensea.io/api/factory/";
+    string public baseURI = "ipfs://bafybeibeb2t5dmq2nggyuclyeh5yv7trc46q2mu5pxblxrgy2dfdmny7rq/out/";
+
+    bool public metadataIsFrozen = false;
 
     /*
      * Enforce the existence of only 100 OpenSea creatures.
      */
-    uint256 CREATURE_SUPPLY = 100;
 
     /*
      * Three different options for minting Creatures (basic, premium, and gold).
@@ -39,7 +40,7 @@ contract MyFactory is FactoryERC721, Ownable {
     }
 
     function name() override external pure returns (string memory) {
-        return "Furry Fox Woodside Club Pre-Sale";
+        return "Furry Fox Woodside Club";
     }
 
     function symbol() override external pure returns (string memory) {
@@ -48,6 +49,11 @@ contract MyFactory is FactoryERC721, Ownable {
 
     function supportsFactoryInterface() override public pure returns (bool) {
         return true;
+    }
+
+    function setBaseURI(string memory _baseURI) public onlyOwner {
+        require(!metadataIsFrozen, "Metadata is permanently frozen");
+        baseURI = _baseURI;
     }
 
     function numOptions() override public view returns (uint256) {
@@ -75,13 +81,8 @@ contract MyFactory is FactoryERC721, Ownable {
         );
         require(canMint(_optionId));
 
-        NFT openSeaCreature = NFT(nftAddress);
-        // if (_optionId == SINGLE_CREATURE_OPTION) {
-            openSeaCreature.mintTo(_toAddress);
-        // } else {
-        //     require(false, "option not supported");
-        // }
-
+        FFWClubNFT nft = FFWClubNFT(nftAddress);
+        nft.mintTo(_msgSender(), 1);
     }
 
     function canMint(uint256 _optionId) override public view returns (bool) {
@@ -89,16 +90,11 @@ contract MyFactory is FactoryERC721, Ownable {
             return false;
         }
 
-        NFT openSeaCreature = NFT(nftAddress);
-        uint256 creatureSupply = openSeaCreature.totalSupply();
+        FFWClubNFT nft = FFWClubNFT(nftAddress);
+        uint256 nftSupply = nft.totalSupply();
 
-        uint256 numItemsAllocated = 0;
-        // if (_optionId == SINGLE_CREATURE_OPTION) {
-            numItemsAllocated = 1;
-        // } else {
-        //     require(false, "option not supported");
-        // }
-        return creatureSupply < (CREATURE_SUPPLY - numItemsAllocated);
+        uint256 numItemsAllocated = 1;
+        return nftSupply < (NUM_OPTIONS - numItemsAllocated);
     }
 
     function tokenURI(uint256 _optionId) override external view returns (string memory) {

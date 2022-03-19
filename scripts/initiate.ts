@@ -25,7 +25,7 @@ async function main() {
     providerEngine,
     {
       networkName: Network.Rinkeby,
-      apiKey: '5bec8ae0372044cab1bef0d866c98618'
+      apiKey: process.env.OPENSEA_API
     }
   );
 
@@ -35,21 +35,21 @@ async function main() {
 
     // We get the contract to deploy
     // 0x732E9a4e88cADb55c369616d388d11c82a346d6b
-  const nft = await ethers.getContractAt("NFT", '0x4D2D1153553c49b9Ed5e6Bce93B2458B6afE85EB')
-//   const NFT = await ethers.getContractFactory("NFT")
-//   const nft = await NFT.deploy('0xf57b2c51ded3a29e6891aba85459d600256cf317');
-//   await nft.deployed();
+  const nft = await ethers.getContractAt("NFT", '0x084b2F8c98B6A8b5B1BA062e2A1B1c5fCC937152')
+  // const NFT = await ethers.getContractFactory("NFT")
+  // const nft = await NFT.deploy('0x1e525eeaf261ca41b809884cbde9dd9e1619573a');
+  // await nft.deployed();
   console.log('NFT deployed', nft.address)
 
-//   let set = await nft.setBa('https://ipfs.io/ipfs/bafybeihmxociuwoqxdmj7z5oea2qkkgv6mpcf4vy4volmjp6jwgc2r5xwa/')
-//   await set.wait()
+  let set = await nft.setBaseTokenURI('https://ipfs.io/ipfs/bafybeihmxociuwoqxdmj7z5oea2qkkgv6mpcf4vy4volmjp6jwgc2r5xwa/')
+  await set.wait()
 
-//   const MyFactory = await ethers.getContractFactory('MyFactory');
-//   const myFactory = await MyFactory.deploy('0xf57b2c51ded3a29e6891aba85459d600256cf317', nft.address);
+  // const MyFactory = await ethers.getContractFactory('MyFactory');
+  // const myFactory = await MyFactory.deploy('0x1e525eeaf261ca41b809884cbde9dd9e1619573a', nft.address);
 
-//   await myFactory.deployed();
+  // await myFactory.deployed();
   
-  const myFactory = await ethers.getContractAt("MyFactory", "0xbDBF2A7C4D7d484cdeC877B24263395803199B8e", user)
+  const myFactory = await ethers.getContractAt("MyFactory", "0x7b5ee2E95B2B8c656dD8eeFd7a9D80192FE88253", user)
   console.log('Factory deployed', myFactory.address)
 
 //   let mint = await myFactory.mint(0, user.address)
@@ -62,20 +62,12 @@ async function main() {
   const fixedSellOrders = await seaport.createFactorySellOrders({
     assets: [
       {
-        tokenId: 1,
+        tokenId: 0,
         tokenAddress: myFactory.address,
-      },
-      {
-        tokenId: 1,
-        tokenAddress: myFactory.address,
-      },
-      {
-        tokenId: 1,
-        tokenAddress: myFactory.address,
-      },
+      }
     ],
     accountAddress: user.address,
-    startAmount: 0.05,
+    startAmount: 0.001,
     numberOfOrders: 1,
   });
   console.log('orders created', fixedSellOrders.length)

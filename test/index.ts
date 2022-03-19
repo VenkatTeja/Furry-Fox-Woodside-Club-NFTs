@@ -1,19 +1,32 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
-describe("Greeter", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
+describe("Factory", function () {
+  it("Mint Factory", async function () {
+    let [owner] = await ethers.getSigners()
+    console.log({owner: owner.address})
+    let wyvernProxy = '0xf57b2c51ded3a29e6891aba85459d600256cf317'
+    const NFT = await ethers.getContractFactory("NFT")
+    const nft = await NFT.deploy(wyvernProxy)
 
-    expect(await greeter.greet()).to.equal("Hello, world!");
+    await nft.deployed();
+    // const nft = await ethers.getContractAt("NFT", '0x074Ab06D4dFFA3aD9d392F2Ab3C07776496dc96A')
+    console.log('Deployed NFT.sol', nft.address)
 
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
+    const MyFactory = await ethers.getContractFactory("MyFactory");
+    const myFactory = await MyFactory.deploy(wyvernProxy, nft.address)
+    await myFactory.deployed();
+    // const myFactory = await ethers.getContractAt("MyFactory", '0x1f3B708e79f68f0fb19f21076E6D34D0A66c22A1')
+    console.log('Deployed MyFactory.sol', myFactory.address)
 
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
+    // let tx = await nft.transferOwnership(myFactory.address)
+    // await tx.wait()
 
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
+    // let tx = await nft.connect(owner).mintTo(owner.address)
+    // await tx.wait()
+
+    tx = await myFactory.connect(owner).mint(0, owner.address)
+    await tx.wait()
+    console.log(tx)
   });
 });

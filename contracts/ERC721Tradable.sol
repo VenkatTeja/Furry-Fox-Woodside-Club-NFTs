@@ -2,13 +2,14 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+// import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./common/meta-transactions/ContentMixin.sol";
+import "./ERC721A.sol";
 import "./common/meta-transactions/NativeMetaTransaction.sol";
 
 contract OwnableDelegateProxy {}
@@ -24,7 +25,7 @@ contract ProxyRegistry {
  * @title ERC721Tradable
  * ERC721Tradable - ERC721 contract that whitelists a trading address, and has minting functionality.
  */
-abstract contract ERC721Tradable is ERC721, ContextMixin, NativeMetaTransaction, Ownable {
+abstract contract ERC721Tradable is ERC721A, ContextMixin, NativeMetaTransaction, Ownable {
     using SafeMath for uint256;
     using Counters for Counters.Counter;
 
@@ -41,7 +42,7 @@ abstract contract ERC721Tradable is ERC721, ContextMixin, NativeMetaTransaction,
         string memory _name,
         string memory _symbol,
         address _proxyRegistryAddress
-    ) ERC721(_name, _symbol) {
+    ) ERC721A(_name, _symbol) {
         proxyRegistryAddress = _proxyRegistryAddress;
         // nextTokenId is initialized to 1, since starting at 0 leads to higher gas cost for the first minter
         _nextTokenId.increment();
@@ -52,30 +53,30 @@ abstract contract ERC721Tradable is ERC721, ContextMixin, NativeMetaTransaction,
      * @dev Mints a token to an address with a tokenURI.
      * @param _to address of the future owner of the token
      */
-    function mintTo(address _to) public onlyOwner {
-        uint256 currentTokenId = _nextTokenId.current();
-        _nextTokenId.increment();
-        _safeMint(_to, currentTokenId);
-    }
+    // function mintTo(address _to, uint64 count) public {
+    //     uint256 currentTokenId = _nextTokenId.current();
+    //     _nextTokenId.increment();
+    //     _safeMint(_to, count);
+    // }
 
     /**
         @dev Returns the total tokens minted so far.
         1 is always subtracted from the Counter since it tracks the next available tokenId.
      */
-    function totalSupply() public view returns (uint256) {
-        return _nextTokenId.current() - 1;
-    }
+    // function totalSupply() public view returns (uint256) {
+    //     return _nextTokenId.current() - 1;
+    // }
 
     // /// @dev Sets the base token URI prefix.
-    function setBaseTokenURI(string memory _baseTokenURI) public {
-        baseTokenURI = _baseTokenURI;
-    }
+    // function setBaseTokenURI(string memory _baseTokenURI) public {
+    //     baseTokenURI = _baseTokenURI;
+    // }
     
-    // function baseTokenURI() virtual public pure returns (string memory);
+    // // function baseTokenURI() virtual public pure returns (string memory);
 
-    function tokenURI(uint256 _tokenId) override public view returns (string memory) {
-        return string(abi.encodePacked(baseTokenURI, Strings.toString(_tokenId)));
-    }
+    // function tokenURI(uint256 _tokenId) override public view returns (string memory) {
+    //     return string(abi.encodePacked(baseTokenURI, Strings.toString(_tokenId)));
+    // }
 
     /**
      * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-less listings.

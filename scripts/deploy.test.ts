@@ -25,6 +25,13 @@ async function main() {
 
   console.log("NFT deployed to:", nft.address);
 
+  const Factory = await ethers.getContractFactory('FFWClubFactory')
+  const factory = await Factory.deploy(wyvernProxyRinkeby, nft.address)
+  await factory.deployed()
+  console.log("Factory deployed to:", factory.address);
+
+  // await (await (factory.setBaseURI('ipfs://bafybeibeb2t5dmq2nggyuclyeh5yv7trc46q2mu5pxblxrgy2dfdmny7rq/out/'))).wait()
+  // console.log('factory base url set')
   // await (await nft.setBaseURI('ipfs://bafybeibeb2t5dmq2nggyuclyeh5yv7trc46q2mu5pxblxrgy2dfdmny7rq/out/')).wait()
   // console.log('base uri set')
   // await (await nft.setLimits(5, 5, 5, 5, 10, 10, 20)).wait()
@@ -33,9 +40,9 @@ async function main() {
   // console.log('phase set to public')
   // let mintPrice = ethers.utils.parseEther('0.001').toString()
   // await (await nft.setMintPrice(mintPrice)).wait()
-  let value = ethers.utils.parseEther('0.002')
-  await (await nft.mintTo(user.address, 2, {value: value.toString()})).wait()
-  console.log('nft minted')
+  // let value = ethers.utils.parseEther('0.002')
+  // await (await nft.mintTo(user.address, 2, {value: value.toString()})).wait()
+  // console.log('nft minted')
 }
 
 // We recommend this pattern to be able to use async/await everywhere
