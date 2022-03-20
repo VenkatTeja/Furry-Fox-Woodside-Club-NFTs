@@ -8,7 +8,7 @@ import Web3 from 'web3';
 console.log('loaded web3')
 /** Do not destructure env variables */
 const INFURA_ID =  process.env.NEXT_PUBLIC_INFURA_ID;
-const NFT_ADDRESS = '0xC89d0B0F98d446E13F7A3f568d28B81AB5c1f55D';//process.env.NEXT_PUBLIC_NFT_ADDRESS;
+const NFT_ADDRESS = process.env.NEXT_PUBLIC_NFT_ADDRESS;
 const ENVIRONMENT = process.env.NEXT_PUBLIC_ENVIRONMENT;
 
 const web3 = new Web3(Web3.givenProvider)

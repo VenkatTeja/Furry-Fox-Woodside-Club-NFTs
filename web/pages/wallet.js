@@ -9,7 +9,7 @@ import axios from 'axios';
 const Wallet = () => {
   const { active, account } = useWeb3React();
   console.log('loaded wallet')
-  const contract_address = '0xC89d0B0F98d446E13F7A3f568d28B81AB5c1f55D' //process.env.NEXT_PUBLIC_NFT_ADDRESS;
+  const contract_address = process.env.NEXT_PUBLIC_NFT_ADDRESS;
   const [displayTokens, setDisplayTokens] = useState([]);
   const [tokenBalance, setTokenBalance] = useState(0);
 

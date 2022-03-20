@@ -31,10 +31,16 @@ export default function Home() {
             </p>
           </Stack>
         </p>
+        {/* <div className={styles.hide}>
+          <Alert severity="warning" key={"error1"}>Please connect wallet1</Alert>
+        </div> */}
+        {/* <p>Active: {active}, chain ID: {chainId}</p> */}
+        {/* <Alert severity="warning" key="error2">Please connect to {process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_NAME} to mint NFTs</Alert> */}
+        {!active && <p></p>}
         {!active && <Alert severity="error">Please connect wallet</Alert>}
-        {chainId != process.env.ACCEPTED_CHAIN_ID && <Alert severity="error">Please connect to {process.env.ACCEPTED_CHAIN_NAME} to mint NFTs</Alert>}
+        {active && chainId != process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID && <Alert severity="error">Please connect to {process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_NAME} to mint NFTs</Alert>}
         {/* <GetStarted /> */}
-        {active && chainId==process.env.ACCEPTED_CHAIN_ID && (<MintNFT />)}
+        {active && chainId==process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID && (<MintNFT />)}
       </main>
     </Container>
   )
