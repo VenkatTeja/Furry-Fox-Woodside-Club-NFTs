@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "hardhat-node": "npx hardhat node --fork https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161 --port 7545"
+    "hardhat-node": "npx hardhat node --fork https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161 --port 7545",
+    "generate-docs": "npx https://github.com/OpenZeppelin/solidity-docgen --solc-module solc-0.8"
   },
   "keywords": [],
   "author": "",
@@ -37,6 +38,7 @@
     "opensea-js": "^2.0.0",
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solc-0.8": "npm:solc@^0.8.13",
     "solhint": "^3.3.7",
     "solidity-coverage": "^0.7.20",
     "ts-node": "^10.5.0",

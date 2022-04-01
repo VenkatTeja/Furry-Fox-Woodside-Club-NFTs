@@ -1,3 +1,4 @@
+
 .container {
   padding: 0 2rem;
 }
@@ -15,7 +16,7 @@
   display: flex;
   flex: 1;
   padding: 2rem 0;
-  border-top: 1px solid #eaeaea;
+  border-top: 1px solid #0e0e0e;
   justify-content: center;
   align-items: center;
 }
@@ -46,6 +47,8 @@
 .title,
 .description {
   text-align: center;
+  color: #F3C830;
+  font-family: IntegralCF;
 }
 
 .description {
@@ -56,6 +59,19 @@
 
 .hide {
   display: none;
+}
+
+.mintContainer {
+  margin: 0 calc(100% - 600px) !important;
+}
+
+.content_bg {
+  background-image: url('../public/cover.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  margin: 0 !important;
+  min-width: 100%;
+  padding: 100px 0;
 }
 
 @media (max-width: 720px) {

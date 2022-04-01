@@ -3,7 +3,7 @@ import { Button, Card, CardActions, CardContent, Input, Typography } from '@mui/
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import useSWR from 'swr';
-
+import styles from '../../styles/Home.module.css';
 import MintNFTCard from './mint-nft-card';
 import { mintWithProof, sampleNFT } from '@pages/utils/_web3';
 
@@ -14,7 +14,8 @@ const NOT_CLAIMABLE = 0;
 const ALREADY_CLAIMED = 1;
 const CLAIMABLE = 2;
 
-const MerkleMintComponent = ({title, description, mintMethod, counterMethod, maxLimitMethod, api}) => {
+const MerkleMintComponent = ({title, description, mintMethod, counterMethod, maxLimitMethod, api,
+    mintPrice, imageUrl}) => {
     const web3 = new Web3(Web3.givenProvider)
     const fetcher = (url) => {
         setLoading(true); 
@@ -97,9 +98,9 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
 
     return (
         <>
-            <Grid item>
+            <Grid item className={styles.mintContainer}>
                 {(loading && 0) ? (
-                    <Card sx={{ maxWidth: 275 }}>
+                    <Card sx={{  width: 600 }}>
                         <CardContent>
                             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                 loading...
@@ -111,6 +112,8 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
                     <>
                         <MintNFTCard
                             title={title}
+                            mintPrice={mintPrice}
+                            imageUrl={imageUrl}
                             description={description}
                             canMint={claimable}
                             numToMint={numToMint}
@@ -121,7 +124,7 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
                             action={onMintTeam}
                         />
                         {mintInfo && mintInfo.status && (
-                            <Card sx={{ maxWidth: 275 }}>
+                            <Card sx={{  width: 600 }}>
                                 <CardContent>
                                     <Typography sx={{ fontSize: 14, wordWrap: 'break-word' }} color="text.secondary" gutterBottom>
                                         {mintInfo.status} [<Button href={mintInfo.url} variant="text">Link</Button>]

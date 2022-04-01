@@ -12,7 +12,7 @@ function iThrowError() {
 describe("NFT", function () {
   describe("NFT Team minting test", async function () {
       let root: any, merkleTree: any, nft: FFWClubNFT;
-      let price = ethers.utils.parseEther('0.5').toString()
+      let price = ethers.utils.parseEther('0.001').toString()
       let wallets: any[];
       let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
       let addr3: SignerWithAddress, addr4: SignerWithAddress;
@@ -38,49 +38,53 @@ describe("NFT", function () {
       })
     
     it('set limits', async () => {
-        let tx = await nft.setLimits(10, 3, 4, 5, 10, 10, 10)
+        let tx = await nft.setLimits(1, 2, 3, 4, 5, 10, 10, 10, 10, 10)
         await tx.wait()
     })
     
-    it('set team merkle root', async () => {
-        let tx = await nft.setTeamMerkleRoot(root)
+    it('set early merkle root', async () => {
+        let tx = await nft.setEarlyAccessMerkleRoot(root)
         await tx.wait()
     })
 
-    it('set limits', async () => {
-        let tx = await nft.setLimits(3, 3, 4, 5, 6, 8, 10)
-        await tx.wait();
+    it('initialize a minting price for testing', async () => {
+        let tx = await nft.setPhaseAndMintPrice(0, price)
+        await tx.wait()
     })
 
     it('[LOCKED] mint with allowed user1', async () => {
         let hashedAddress = keccak256(addr1.address)
         let proof = merkleTree.getHexProof(hashedAddress)
         try {
-            let tx = await nft.connect(addr1).mintToTeam(proof, 1)
+            let tx = await nft.connect(addr1).mintEarlyAccessSale(proof, 1, {value: price})
             await tx.wait()
-        } catch(err) {return;}
+        } catch(err: any) {
+             return expect(err.message.includes('not in required phase')).to.equal(true)
+        }
         throw new Error('mint should have failed, but didnt')
     })
 
-    it('set phase to pre-sale', async () => {
-        let tx = await nft.setPhase(1)
+    it('set phase to early access', async () => {
+        let tx = await nft.setPhaseAndMintPrice(1, price)
         await tx.wait()
     })
 
     it('[PRESALE] mint with allowed user1 mint 1: should pass', async () => {
         let hashedAddress = keccak256(addr1.address)
         let proof = merkleTree.getHexProof(hashedAddress)
-        let tx = await nft.connect(addr1).mintToTeam(proof, 1)
+        let value = ethers.utils.parseEther('0.001').toString()
+        let tx = await nft.connect(addr1).mintEarlyAccessSale(proof, 1, {value})
         await tx.wait()
 
-        let balance = await nft.teamCounter(addr1.address)
+        let balance = await nft.earlyCounter(addr1.address)
         expect(balance.toString()).to.equal('1')
     })
 
     it('[PRESALE] mint with allowed user2 mint 2: should pass', async () => {
         let hashedAddress = keccak256(addr2.address)
         let proof = merkleTree.getHexProof(hashedAddress)
-        let tx = await nft.connect(addr2).mintToTeam(proof, 2)
+        let value = ethers.utils.parseEther('0.002').toString()
+        let tx = await nft.connect(addr2).mintEarlyAccessSale(proof, 2, {value})
         await tx.wait()
     })
 
@@ -88,9 +92,12 @@ describe("NFT", function () {
         let hashedAddress = keccak256(addr2.address)
         let proof = merkleTree.getHexProof(hashedAddress)
         try {
-            let tx = await nft.connect(addr2).mintToTeam(proof, 2)
+            let value = ethers.utils.parseEther('0.002').toString()
+            let tx = await nft.connect(addr2).mintEarlyAccessSale(proof, 2, {value})
             await tx.wait()
-        } catch(err) {return;}
+        } catch(err: any) {
+            return expect(err.message.includes('exceeding limit per wallet')).to.equal(true)
+        }
         throw new Error('mint should have failed, but didnt')
     })
 
@@ -98,21 +105,22 @@ describe("NFT", function () {
         let hashedAddress = keccak256(addr3.address)
         let proof = merkleTree.getHexProof(hashedAddress)
         try {
-            let tx = await nft.connect(addr3).mintToTeam(proof, 1)
+            let value = ethers.utils.parseEther('0.001').toString()
+            let tx = await nft.connect(addr3).mintEarlyAccessSale(proof, 1, {value})
             await tx.wait()
-        } catch(err) {return;}
+        } catch(err: any) {
+            return expect(err.message.includes('Incorrect proof')).to.equal(true)
+            return;
+        }
         throw new Error('mint should have failed, but didnt')
     })
 
     it('set phase to public-sale', async () => {
-        let tx = await nft.setPhase(2)
+        let value = ethers.utils.parseEther('0.25').toString()
+        let tx = await nft.setPhaseAndMintPrice(4, value) 
         await tx.wait()
     })
 
-    it('set mint price', async () => {
-        let tx = await nft.setMintPrice(price)
-        await tx.wait()
-    })
 
     it('[PUBLICSALE] mint with un-allowed user3 mint 4: should fail [less fee given]', async () => {
         try {
@@ -126,7 +134,7 @@ describe("NFT", function () {
     })
 
     it('[PUBLICSALE] mint with un-allowed user3 mint 4: should pass', async () => {
-        let pless = ethers.utils.parseEther('2')
+        let pless = ethers.utils.parseEther('1')
         let tx = await nft.connect(addr3).mintTo(addr3.address, 4, {value: pless.toString()})
         await tx.wait()
     })
@@ -144,11 +152,11 @@ describe("NFT", function () {
 
     it('[PUBLICSALE] mint with un-allowed user4 mint 8: should fail [wallet limit check]', async () => {
         try {
-            let pless = ethers.utils.parseEther('4')
+            let pless = ethers.utils.parseEther('2')
             let tx = await nft.connect(addr3).mintTo(addr3.address, 8, {value: pless.toString()})
             await tx.wait()
         } catch(err: any) {
-            return expect(err.message.includes('You are exceeding max limit per wallet')).to.equal(true)
+            return expect(err.message.includes('exceeding max limit per wallet')).to.equal(true)
         }
         throw new Error('mint should have failed, but didnt')
     })

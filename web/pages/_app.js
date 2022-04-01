@@ -9,6 +9,7 @@ import theme from '../styles/theme';
 import Footer from "@components/core-components/Footer";
 import { Web3Provider } from '@ethersproject/providers';
 import { Web3ReactProvider } from "@web3-react/core";
+import { Container } from '@mui/material';
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -26,15 +27,18 @@ export default function MyApp(props) {
     <CacheProvider value={emotionCache}>
       <Head>
         <title>NFT with Merkle Whitelist Web3 Scaffold</title>
-        <meta name="viewport" content="initial-scale=1, width=device-width" />
+        <meta name  ="viewport" content="initial-scale=1, width=device-width" />
       </Head>
       <ThemeProvider theme={theme}>
         <Web3ReactProvider getLibrary={getLibrary}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
-        <Header />
-        <Component {...pageProps} />
-        <Footer />
+        <Container sx={{bgcolor: 'secondary.main', minHeight: '100vh', margin: 0, 'minWidth': '100%'}}
+          style={{padding: 0, fontFamily: 'IntegralCF'}}>
+          <Header />
+          <Component {...pageProps} />
+          <Footer />
+        </Container>
         </Web3ReactProvider>
       </ThemeProvider>
     </CacheProvider>

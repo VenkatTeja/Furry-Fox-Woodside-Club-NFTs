@@ -1,4 +1,4 @@
-import { Grid, Stack } from '@mui/material';
+import { Grid, Stack, Typography  } from '@mui/material';
 import { useWeb3React } from '@web3-react/core';
 import { useEffect, useState } from 'react';
 import { mintGift, mintWithProof, mintPublic, mintWhitelist, sampleNFT } from '@pages/utils/_web3';
@@ -138,37 +138,51 @@ const MintNFT = () => {
 
   return (
     <>
-      <Stack id="demo">
-        <h2>Mint an NFT</h2>
+      <Stack id="demo" sx={{bgColor: 'secondary.main'}}>
+        <Typography variant="h4" color='primary.main' sx={{textAlign: 'center', paddingTop: 5, paddingBottom: 5, fontFamily: 'IntegralCF'}}>Mint an NFT</Typography>
         <Grid container spacing={3} justifyContent="center" alignItems="center">
-         <MerkleMintComponent
-            title={'Team Mint'}
+        <MerkleMintComponent
+            title={'Early Access Mint'}
             description={'Mint this NFT to the connected wallet. Must be on team whitelist.'}
             mintMethod="mintToTeam"
             counterMethod="teamCounter"
             maxLimitMethod="MAX_PER_TEAM_ADDRESS"
             api="teamProof"
-         >useState
-         </MerkleMintComponent>
-          <Grid item>
-            <MintNFTCard
-              title={'Airdrop Mint'}
-              description={'Mint this NFT to the connected wallet. Must be on airdrop.'}
-              canMint={giftClaimable}
-              mintStatus={giftMintStatus}
-              action={onMintGift}
-            />
-          </Grid>
-          <Grid item>
-            <MintNFTCard
-              title={'Pre-Sale Mint'}
-              description={'Mint this NFT to the connected wallet. Must be on pre-sale whitelist.'}
-              canMint={whitelistClaimable}
-              mintStatus={whitelistMintStatus}
-              action={onMintWhitelist}
-            />
-          </Grid>
-          <Grid item>
+            imageUrl={'/nfts/01.png'}
+            mintPrice={0.04}
+         ></MerkleMintComponent>
+         <MerkleMintComponent
+            title={'VIP Access Mint'}
+            description={'Mint this NFT to the connected wallet. Must be on team whitelist.'}
+            mintMethod="mintToTeam"
+            counterMethod="teamCounter"
+            maxLimitMethod="MAX_PER_TEAM_ADDRESS"
+            api="teamProof"
+            imageUrl={'/nfts/02.png'}
+            mintPrice={0.05}
+         ></MerkleMintComponent>
+         <MerkleMintComponent
+            title={'Pre-Sale Mint'}
+            description={'Mint this NFT to the connected wallet. Must be on team whitelist.'}
+            mintMethod="mintToTeam"
+            counterMethod="teamCounter"
+            maxLimitMethod="MAX_PER_TEAM_ADDRESS"
+            api="teamProof"
+            imageUrl={'/nfts/03.png'}
+            mintPrice={0.06}
+         ></MerkleMintComponent>
+         <MerkleMintComponent
+            title={'Airdrop Mint'}
+            description={'Mint this NFT to the connected wallet. Must be on team whitelist.'}
+            mintMethod="mintToTeam"
+            counterMethod="teamCounter"
+            maxLimitMethod="MAX_PER_TEAM_ADDRESS"
+            api="teamProof"
+            imageUrl={'/nfts/01.png'}
+            mintPrice={0}
+         ></MerkleMintComponent>
+         
+         <Grid item>
             <MintNFTCard
               title={'Public Mint'}
               description={'Mint this NFT to the connected wallet. Open for any wallet to mint. Cost: 0.02 ETH'}
@@ -177,6 +191,8 @@ const MintNFT = () => {
               showNumToMint={true}
               setNumToMint={setNumToMint}
               action={onPublicMint}
+            imageUrl={'/nfts/02.png'}
+            mintPrice={0.12}
             />
           </Grid>
         </Grid>

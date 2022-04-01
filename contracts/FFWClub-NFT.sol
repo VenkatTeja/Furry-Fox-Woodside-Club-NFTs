@@ -6,51 +6,67 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "./common/meta-transactions/RandomlyAssigned.sol";
 
-contract FFWClubNFT is ERC721Tradable {
-    // using Counters for Counters.Counter;
-    // Counters.Counter private currentTokenId;
-    
-    enum SalePhase { LOCKED, PRESALE, PUBLICSALE }
-    
-    bytes32 public whitelistMerkleRoot; 
-    bytes32 public airdropMerkleRoot; 
-    bytes32 public teamMerkleRoot; 
+// Furry Fox Woodside club
+//     /\_/\
+//    | - - |
+//    \ --- /
+//     \___/
 
+/// @title Furry Fox Woodside club NFTs
+/// @author FFWClub team
+/// @custom:developer @VenkatTeja
+contract FFWClubNFT is ERC721Tradable {
+    enum SalePhase { LOCKED, EARLY_SALE, VIP_SALE, PRESALE, PUBLICSALE }
+    SalePhase public phase = SalePhase.LOCKED;
+    
+    // merkle tree roots for whitelisting
+    bytes32 public whitelistMerkleRoot; 
+    bytes32 public earlyAccessMerkleRoot; 
+    bytes32 public VIPAccessMerkleRoot; 
+    bytes32 public airdropMerkleRoot; 
+
+    // tracks mints per wallet in each phase
     mapping(address => uint64) public teamCounter;
     mapping(address => uint64) public airdropCounter;
+    mapping(address => uint64) public earlyCounter;
+    mapping(address => uint64) public vipCounter;
     mapping(address => uint64) public presaleCounter;
     mapping(address => uint64) public publicsaleCounter;
 
-    uint64 totalTeamCounter;
-    uint64 totalAirdropCounter;
-    uint64 totalPresaleCounter;
+    // tracks total mints per phase
+    uint64 public totalTeamCounter;
+    uint64 public totalAirdropCounter;
+    uint64 public totalEarlyCounter;
+    uint64 public totalVIPCounter;
+    uint64 public totalPresaleCounter;
 
-    // set these limits as needed
-    uint64 TOTAL_TEAM_RESERVE = 200;
-    uint64 TOTAL_AIRDROP_RESERVE = 200;
-    uint64 TOTAL_PRESALE_RESERVE = 2000;
+    // total reserve limits
+    uint64 public TOTAL_TEAM_RESERVE = 200;
+    uint64 public TOTAL_AIRDROP_RESERVE = 200;
+    uint64 public TOTAL_EARLY_RESERVE = 2000;
+    uint64 public TOTAL_VIP_RESERVE = 2000;
+    uint64 public TOTAL_PRESALE_RESERVE = 2000;
 
-    uint16 public MAX_PER_TEAM_ADDRESS = 20;
+    // per wallet limits
     uint16 public MAX_PER_AIRDROP_ADDRESS = 20;
+    uint16 public MAX_PER_EARLY_ADDRESS = 20;
+    uint16 public MAX_PER_VIP_ADDRESS = 20;
     uint16 public MAX_PER_PRESALE_ADDRESS = 100;
     uint16 public MAX_PER_PUBLICSALE_ADDRESS = 500;
 
-    SalePhase public phase = SalePhase.LOCKED;
 
     uint64 public MAX_SUPPLY = 10000;
 
-	uint256 public mintPrice = 0.025 ether;
+	uint256 public mintPrice = 0.04 ether; // change as phase is updated
 
-    string public baseURI = "";
+    string public baseURI = ""; // to be updated with ipfs URIs
 
+    // freeze settings once finalized
     bool public metadataIsFrozen = false;
-    bool public settingsIsFrezen = false;
+    bool public settingsIsFrozen = false;
 
-    struct MintTypes {
-		uint256 _numberOfAuthorMintsByAddress;
-		uint256 _numberOfMintsByAddress;
-	}
-    
+    bool merkleMintVerficationEnabled = true;
+    bool paused = false;
 
     constructor(address _proxyRegistryAddress, uint64 maxSupply)
         ERC721Tradable("Furry Fox Woodside Club", "FFWClub", _proxyRegistryAddress)
@@ -58,67 +74,154 @@ contract FFWClubNFT is ERC721Tradable {
         MAX_SUPPLY = maxSupply;
     }
 
-    function setPhase(SalePhase _phase) public onlyOwner {
+    
+    /// Update phase and mint price together. The phase can only advance.
+    /// @param _phase new phase id
+    /// @param _mintPrice  new mint price in wei
+    /// @custom:only-owner
+    function setPhaseAndMintPrice(SalePhase _phase, uint256 _mintPrice) public onlyOwner {
+        if(uint8(_phase) > uint8(phase)) // to be able to update price within same phase (for tests)
+            _setPhase(_phase);
+        _setMintPrice(_mintPrice);
+    }
+
+    /// @param _phase new phase id
+    function _setPhase(SalePhase _phase) internal {
         require(uint8(_phase) > uint8(phase), "can only advance phases");
         phase = _phase;
     }
 
-    function setMintPrice(uint256 _mintPrice) public onlyOwner {
+    /// Update mint price
+    /// @param _mintPrice  new mint price in wei
+    /// @custom:only-owner
+    function _setMintPrice(uint256 _mintPrice) internal onlyOwner {
         mintPrice = _mintPrice;
     }
 
-    function setBaseURI(string memory _baseURI) public onlyOwner {
+    /// Update base NFT URI
+    /// @param __baseURI set ipfs url (e.g. ipfs://bafy..../out/)
+    /// should point to meta files without any .json extension
+    /// @custom:only-owner
+    function setBaseURI(string memory __baseURI) public onlyOwner {
         require(!metadataIsFrozen, "Metadata is permanently frozen");
-        baseURI = _baseURI;
+        baseURI = __baseURI;
+    }
+
+    /// Pause/unpause minting
+    /// @custom:only-owner
+    function setPaused(bool isPaused) public onlyOwner {
+        paused = isPaused;
     }
 
     /// Freezes the metadata
 	/// @dev sets the state of `metadataIsFrozen` to true
 	/// @notice permamently freezes the metadata so that no more changes are possible
+    /// @custom:only-owner
 	function freezeMetadata() external onlyOwner {
 		require(!metadataIsFrozen, "Metadata is already frozen");
 		metadataIsFrozen = true;
 	}
 
+    /// Freezes the settings
+	/// @dev sets the state of `settingsIsFrozen` to true
+	/// @notice permamently freezes the limtis so that no more changes are possible
+    /// @custom:only-owner
     function freezeSettings() external onlyOwner {
-		require(!settingsIsFrezen, "Settings is already frozen");
-		settingsIsFrezen = true;
+		require(!settingsIsFrozen, "Settings is already frozen");
+		settingsIsFrozen = true;
 	}
 
+    /// get base URI
+    // @dev overrides baseURI logic to be compatiable with our logic and opensea
     function _baseURI() internal override view virtual returns (string memory) {
         return baseURI;
     }
+    
+    /// Supply can be reduced but cannot be increased. 
+    /// Once reduced, cannot be increased again.
+    /// @notice constraints: supply can only reduce up what has been minted already
+    /// @custom:only-owner
+    function reduceSupply(uint64 newMaxSupply) public onlyOwner {
+        require(newMaxSupply >= _totalMinted(), "cannot reduce below total mint");
+        require(newMaxSupply < MAX_SUPPLY, "should be < MAX SUPPLY");
+        MAX_SUPPLY = newMaxSupply;
+    }
 
-    function setLimits(uint16 teamLimit, uint16 airdropLimit, uint16 preSaleLimit, 
-    uint16 publicSaleLimit, uint64 totalTeamReserve, uint64 totalAirdropReserve, uint64 totalPresaleReserve) public onlyOwner {
-        require(!settingsIsFrezen, "Settings are permanently frozen");
-        MAX_PER_TEAM_ADDRESS = teamLimit;
+    /// Switches on/off if merkle proof verification has to be done
+    /// if disabled, merkle tree verification will no longer happen 
+    /// and anyone will be able to mint
+    /// @custom:only-owner
+    function setMerkleMintVerification(bool isEnabled) public onlyOwner {
+        merkleMintVerficationEnabled = isEnabled;
+    }
+
+    /// update per wallet limits and reserve limits across various phases
+    /// @param airdropLimit max limit per wallet in airdrop
+    /// @param earlyAccessLimit max limit per wallet in early access
+    /// @param vipAccessLimit max limit per wallet in vip access
+    /// @param preSaleLimit max limit per wallet in pre sale
+    /// @param publicSaleLimit max limit per wallet in public sale
+    /// @param totalTeamReserve max tokens allocated for team
+    /// @param totalAirdropReserve max tokens allocated for airdrop
+    /// @param earlyAccessReserve max tokens allocated for early access
+    /// @param vipAccessReserve max tokens allocated for vip access
+    /// @param totalPresaleReserve max tokens allocated for pre-sale
+    /// @dev cannot be updated once settings are frozen
+    /// @custom:only-owner
+    function setLimits(uint16 airdropLimit, uint16 earlyAccessLimit,
+        uint16 vipAccessLimit, uint16 preSaleLimit, uint16 publicSaleLimit, 
+        uint64 totalTeamReserve, uint64 totalAirdropReserve, uint64 earlyAccessReserve, 
+        uint64 vipAccessReserve, uint64 totalPresaleReserve) public onlyOwner {
+        require(!settingsIsFrozen, "Settings are permanently frozen");
         MAX_PER_AIRDROP_ADDRESS = airdropLimit;
+        MAX_PER_EARLY_ADDRESS = earlyAccessLimit;
+        MAX_PER_VIP_ADDRESS = vipAccessLimit;
         MAX_PER_PRESALE_ADDRESS = preSaleLimit;
         MAX_PER_PUBLICSALE_ADDRESS = publicSaleLimit;
+
         TOTAL_TEAM_RESERVE = totalTeamReserve;
         TOTAL_AIRDROP_RESERVE = totalAirdropReserve;
+        TOTAL_EARLY_RESERVE = earlyAccessReserve;
+        TOTAL_VIP_RESERVE = vipAccessReserve;
         TOTAL_PRESALE_RESERVE = totalPresaleReserve;
     }
 
-    function setMerkleRoots(bytes32 _teamRoot, bytes32 _airdropRoot, bytes32 _whitelistRoot) public onlyOwner {
-        setTeamMerkleRoot(_teamRoot);
+    /// set merkle tree roots for all phases
+    // @dev single function given to save gas
+    /// @custom:only-owner
+    function setMerkleRoots(bytes32 _airdropRoot, bytes32 _earlyAccessRoot, bytes32 _vipAccessRoot, bytes32 _whitelistRoot) public onlyOwner {
         setAirdropMerkleRoot(_airdropRoot);
+        setEarlyAccessMerkleRoot(_earlyAccessRoot);
+        setVIPAccessMerkleRoot(_vipAccessRoot);
         setWhitelistMerkleRoot(_whitelistRoot);
     }
 
-    function setWhitelistMerkleRoot(bytes32 _root) public onlyOwner {
-        whitelistMerkleRoot = _root; 
-    }  
-
+    /// set merkle tree root for airdrop
+    /// @custom:only-owner
     function setAirdropMerkleRoot(bytes32 _root) public onlyOwner {
         airdropMerkleRoot = _root; 
     }  
 
-    function setTeamMerkleRoot(bytes32 _root) public onlyOwner {
-        teamMerkleRoot = _root; 
+    /// set merkle tree root for early access
+    /// @custom:only-owner
+    function setEarlyAccessMerkleRoot(bytes32 _root) public onlyOwner {
+        earlyAccessMerkleRoot = _root; 
     }  
 
+    /// set merkle tree root for vip access
+    /// @custom:only-owner
+    function setVIPAccessMerkleRoot(bytes32 _root) public onlyOwner {
+        VIPAccessMerkleRoot = _root; 
+    }
+
+    /// set merkle tree root for presale
+    /// @custom:only-owner
+    function setWhitelistMerkleRoot(bytes32 _root) public onlyOwner {
+        whitelistMerkleRoot = _root; 
+    }    
+
+    /// for a given merkleRoot and merkle, 
+    /// verifies if the sender has access to mint
     function _verifyMerkleLeaf(  
         bytes32 _merkleRoot,  
         bytes32[] memory _merkleProof ) internal view returns (bool) {  
@@ -127,65 +230,130 @@ contract FFWClubNFT is ERC721Tradable {
             return true; // Or you can mint tokens here
     }
 
-    function _validatePresale() internal view {
-        require(phase == SalePhase.PRESALE, "Contract not in presale phase");
+    /// Mint reserved tokens for the team. Only Owner
+    /// pass array of toAddresses and array of quantity for each address
+    /// @notice constraints: 1. length of array of to address should be equal to length of counts array
+    /// 2. Cannot mint beyond team reserve
+    /// @custom:only-owner
+    function mintToTeam(uint64[] memory counts, address[] memory toAddresses) public onlyOwner {
+        require(counts.length == toAddresses.length, "counts size != toAddresses size");
+        uint64 totalCount = 0;
+        for(uint8 i=0; i<counts.length; ++i) {
+            totalCount += counts[i];
+        }
+        require(totalTeamCounter + totalCount <= TOTAL_TEAM_RESERVE, "exceeding total team limit");
+        totalTeamCounter += totalCount;
+        for(uint8 i=0; i<counts.length; ++i) {
+            _mint(toAddresses[i], counts[i]);
+        }
     }
 
-    function mintToTeam(bytes32[] memory _merkleProof, uint64 count) public {
-        require(teamCounter[_msgSender()] + count <= MAX_PER_TEAM_ADDRESS, "You are exceeding limit per wallet");
-        require(totalTeamCounter + count <= TOTAL_TEAM_RESERVE, "you are exceeding total team limit");
-        teamCounter[_msgSender()] += count;
-        totalTeamCounter += count;
-        _mintWhitelist(teamMerkleRoot, _merkleProof, count);
-    }
-
+    /// The minter can pass their proof and quantity (count)
+    /// and get their mints.
+    /// mint open during any phase and no mint price
+    /// @notice constraints: 1. Max mints/wallet limit
+    /// 2. Total reserve limit
     function mintAirdrop(bytes32[] memory _merkleProof, uint64 count) public {
-        require(airdropCounter[_msgSender()] + count <= MAX_PER_AIRDROP_ADDRESS, "You are exceeding limit per wallet");
-        require(totalAirdropCounter + count <= TOTAL_AIRDROP_RESERVE, "you are exceeding total airdrop limit");
+        require(airdropCounter[_msgSender()] + count <= MAX_PER_AIRDROP_ADDRESS, "exceeding limit per wallet");
+        require(totalAirdropCounter + count <= TOTAL_AIRDROP_RESERVE, "exceeding total airdrop limit");
         airdropCounter[_msgSender()] += count;
         totalAirdropCounter += count;
-        _mintWhitelist(airdropMerkleRoot, _merkleProof, count);
+        _mintWhitelist(airdropMerkleRoot, _merkleProof, count, true);
     }
     
-    function mintPresale(bytes32[] memory _merkleProof, uint64 count) public {
-        require(presaleCounter[_msgSender()] + count <= MAX_PER_PRESALE_ADDRESS, "You are exceeding limit per wallet");
-        require(totalPresaleCounter + count <= TOTAL_PRESALE_RESERVE, "you are exceeding total presale limit");
-        presaleCounter[_msgSender()] += count;
-        totalPresaleCounter += count;
-        _mintWhitelist(whitelistMerkleRoot, _merkleProof, count);
+    /// Mint during Early access phase
+    /// only wallets eligible in this phase can mint if merkle mint is enabled
+    /// Accepts ETH. Verifies if ETH sent >= current mint price * count 
+    function mintEarlyAccessSale(bytes32[] memory _merkleProof, uint64 count) public 
+        validateEthPayment(count)
+        payable {
+        _merkleMintWrapper(earlyCounter, MAX_PER_EARLY_ADDRESS, totalEarlyCounter, TOTAL_EARLY_RESERVE,
+        count, SalePhase.EARLY_SALE, _merkleProof, earlyAccessMerkleRoot);
     }
 
-    function _mintWhitelist(bytes32 root, bytes32[] memory proof, uint64 count) internal {
-        _validatePresale();
-        require(     
-        _verifyMerkleLeaf(      
-            root,
-            proof
-        ), "Invalid proof");
+    /// Mint during VIP access phase
+    /// only wallets eligible in this phase can mint if merkle mint is enabled
+    /// Accepts ETH. Verifies if ETH sent >= current mint price * count 
+    function mintVIPAccessSale(bytes32[] memory _merkleProof, uint64 count) public 
+        validateEthPayment(count)
+        payable {
+        _merkleMintWrapper(vipCounter, MAX_PER_VIP_ADDRESS, totalVIPCounter, TOTAL_VIP_RESERVE,
+        count, SalePhase.VIP_SALE, _merkleProof, VIPAccessMerkleRoot);
+    }
+    
+    /// Mint during PreSale phase
+    /// only wallets eligible in this phase can mint if merkle mint is enabled
+    /// Accepts ETH. Verifies if ETH sent >= current mint price * count 
+    function mintPresale(bytes32[] memory _merkleProof, uint64 count) public 
+        validateEthPayment(count)
+        payable {
+        _merkleMintWrapper(presaleCounter, MAX_PER_PRESALE_ADDRESS, totalPresaleCounter, TOTAL_PRESALE_RESERVE,
+        count, SalePhase.PRESALE, _merkleProof, whitelistMerkleRoot);
+    }
+
+    /// Internal method for common whitelist mint logic based on phase
+    /// Method used for Early, VIP and Pre-sale mints
+    /// Checks for the following before mint:
+    /// 1. per wallet limits
+    /// 2. Total reserve under the phase
+    /// 3. Phase is eligible
+    /// Then, Calls internal method `_mintWhitelist`
+    /// if merkleMint is disabled, anyone can mint using these methods
+    function _merkleMintWrapper(mapping(address => uint64) storage counter, uint16 maxPerWallet, 
+        uint64 totalReserve, uint64 totalReserveLimit,
+        uint64 count, SalePhase acceptedPhase, bytes32[] memory _merkleProof, bytes32 merkleRoot) internal {
+        require(phase == acceptedPhase, "not in required phase");
+        require(counter[_msgSender()] + count <= maxPerWallet, "exceeding limit per wallet");
+        require(totalReserve + count <= totalReserveLimit, "exceeding total vip limit");
+        counter[_msgSender()] += count;
+        totalReserve += count;
+        _mintWhitelist(merkleRoot, _merkleProof, count, merkleMintVerficationEnabled);
+    }
+
+    /// Verifies proof and mints NFT
+    /// if checkProof is enabled, verifies the proof
+    /// Then calls internal method `_mint`
+    function _mintWhitelist(bytes32 root, bytes32[] memory proof, uint64 count,
+        bool checkProof) internal {
+        if(checkProof)
+            require(     
+            _verifyMerkleLeaf(      
+                root,
+                proof
+            ), "Invalid proof");
 
         _mint(_msgSender(), count);
     }
 
+    /// Verifies supply and mints
+    /// Does the following checks:
+    /// 1. mint is within the max supply
+    /// 2. if minting is not paused
     function _mint(address _to, uint64 quantity) internal {
+        require(!paused, "Minting is paused");
         require(_totalMinted() + quantity <= MAX_SUPPLY, "Supply exceeding");
         _safeMint(_to, quantity);
     }
     
+    /// Public Mint accessible to anyone once public sale phase is enabled
+    /// Accepts ETH. Verifies if ETH sent >= current mint price * count 
     function mintTo(address _to, uint64 count) public
         validateEthPayment(count)
         payable {
-        require(phase == SalePhase.PUBLICSALE, "Contract is not yet open for public sale");
-        require(publicsaleCounter[_msgSender()] + count <= MAX_PER_PUBLICSALE_ADDRESS, "You are exceeding max limit per wallet");
+        require(phase == SalePhase.PUBLICSALE, "notfor public sale yet");
+        require(publicsaleCounter[_msgSender()] + count <= MAX_PER_PUBLICSALE_ADDRESS, "exceeding max limit per wallet");
         publicsaleCounter[_msgSender()] += count;
         _mint(_to, count);
     }
 
+    /// Send ETH held by contract. Only Owner.
+    /// @custom:only-owner
     function disbursePayments(
 		address[] memory payees_,
 		uint256[] memory amounts_
 	) external onlyOwner {
 	    require(payees_.length == amounts_.length,
-			"Payees and amounts length mismatch"
+			"Payees and amounts size mismatch"
 		);
 		for (uint256 i; i < payees_.length; i++) {
 			makePaymentTo(payees_[i], amounts_[i]);
@@ -209,4 +377,11 @@ contract FFWClubNFT is ERC721Tradable {
 		);
         _;
 	}
+
+    /// an NFT owner can burn their NFTs
+    function burn(uint256 tokenId) public {
+        address owner = ownerOf(tokenId);
+        require(owner == _msgSender(), "no permissions");
+        _burn(tokenId);
+    }
 }

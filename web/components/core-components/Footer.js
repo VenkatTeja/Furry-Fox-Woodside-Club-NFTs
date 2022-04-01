@@ -14,8 +14,8 @@ const Footer = () => {
         spacing={4}
       >
         <MuiNextLink
-          sx={{ textDecoration: "none", color: 'black' }}
-          href="https://twitter.com/straightupjac"
+          sx={{ textDecoration: "none", color: '#1DA1F2' }}
+          href="https://twitter.com/furryfoxWC"
           target="_blank"
           rel="noopener noreferrer"
         >

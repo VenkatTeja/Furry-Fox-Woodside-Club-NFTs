@@ -17,15 +17,14 @@ import { Stack } from "@mui/material";
 const Offset = styled("div")(({ theme }) => theme.mixins.toolbar);
 
 export const navLinks = [
-  { title: 'home', path: '/#home' },
-  { title: 'demo', path: '/#demo'},
+  { title: 'HOME', path: '/#home' },
 ];
 
 const Header = () => {
   return (
     <>
     {/* <HideOnScroll> */}
-        <AppBar position="fixed" sx={{ backgroundColor: '#FFFFFF' }} elevation={0}>
+        <AppBar position="fixed" sx={{ backgroundColor: '#0E0E0E' }} elevation={0}>
           <Toolbar>
             <Container
               maxWidth="lg"
@@ -33,12 +32,12 @@ const Header = () => {
             >
               <IconButton edge="start" aria-label="home">
                 <MuiNextLink activeClassName="active" href='/'>
-                  <BubbleChartTwoToneIcon
+                  {/* <BubbleChartTwoToneIcon
                     sx={{
                       color: (theme) => theme.palette.primary,
                     }}
                     fontSize="large"
-                  />
+                  /> */}
                 </MuiNextLink>
               </IconButton>
               <Stack direction="row" alignItems='center'>
