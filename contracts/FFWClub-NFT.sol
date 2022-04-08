@@ -5,6 +5,9 @@ import "./ERC721Tradable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "./common/meta-transactions/RandomlyAssigned.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "hardhat/console.sol";
 
 // Furry Fox Woodside club
 //     /\_/\
@@ -16,6 +19,9 @@ import "./common/meta-transactions/RandomlyAssigned.sol";
 /// @author FFWClub team
 /// @custom:developer @VenkatTeja
 contract FFWClubNFT is ERC721Tradable {
+    using Strings for uint256;
+
+    IERC20 public WETH = IERC20(0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619);
     enum SalePhase { LOCKED, EARLY_SALE, VIP_SALE, PRESALE, PUBLICSALE }
     SalePhase public phase = SalePhase.LOCKED;
     
@@ -67,11 +73,13 @@ contract FFWClubNFT is ERC721Tradable {
 
     bool merkleMintVerficationEnabled = true;
     bool paused = false;
+    bool revealed = false;
 
-    constructor(address _proxyRegistryAddress, uint64 maxSupply)
+    constructor(address _proxyRegistryAddress, uint64 maxSupply, address _WETH)
         ERC721Tradable("Furry Fox Woodside Club", "FFWClub", _proxyRegistryAddress)
     {
         MAX_SUPPLY = maxSupply;
+        WETH = IERC20(_WETH);
     }
 
     
@@ -80,7 +88,7 @@ contract FFWClubNFT is ERC721Tradable {
     /// @param _mintPrice  new mint price in wei
     /// @custom:only-owner
     function setPhaseAndMintPrice(SalePhase _phase, uint256 _mintPrice) public onlyOwner {
-        if(uint8(_phase) > uint8(phase)) // to be able to update price within same phase (for tests)
+        if(uint8(_phase) != uint8(phase)) // to be able to update price within same phase (for tests)
             _setPhase(_phase);
         _setMintPrice(_mintPrice);
     }
@@ -113,6 +121,18 @@ contract FFWClubNFT is ERC721Tradable {
         paused = isPaused;
     }
 
+    /// Update proxy registry used by open sea
+    function setProxyRegistry(address proxy) public onlyOwner {
+        proxyRegistryAddress = proxy;
+    }
+    /// Reveals NFTs
+    /// @dev when true, the tokenURI returned is based on id. 
+    /// when false, a static pre-reveal URL is sent for any NFT
+    function revealNFTs() public onlyOwner {
+        require(!revealed, "NFTs already revealed");
+        revealed = true;
+    }
+
     /// Freezes the metadata
 	/// @dev sets the state of `metadataIsFrozen` to true
 	/// @notice permamently freezes the metadata so that no more changes are possible
@@ -130,11 +150,19 @@ contract FFWClubNFT is ERC721Tradable {
 		require(!settingsIsFrozen, "Settings is already frozen");
 		settingsIsFrozen = true;
 	}
-
+    
     /// get base URI
     // @dev overrides baseURI logic to be compatiable with our logic and opensea
     function _baseURI() internal override view virtual returns (string memory) {
         return baseURI;
+    }
+
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        if (!_exists(tokenId)) revert URIQueryForNonexistentToken();
+        string memory __baseURI = _baseURI();
+        if(!revealed)
+            return __baseURI;
+        return bytes(__baseURI).length != 0 ? string(abi.encodePacked(__baseURI, tokenId.toString())) : "";
     }
     
     /// Supply can be reduced but cannot be increased. 
@@ -146,6 +174,7 @@ contract FFWClubNFT is ERC721Tradable {
         require(newMaxSupply < MAX_SUPPLY, "should be < MAX SUPPLY");
         MAX_SUPPLY = newMaxSupply;
     }
+
 
     /// Switches on/off if merkle proof verification has to be done
     /// if disabled, merkle tree verification will no longer happen 
@@ -265,7 +294,7 @@ contract FFWClubNFT is ERC721Tradable {
     /// only wallets eligible in this phase can mint if merkle mint is enabled
     /// Accepts ETH. Verifies if ETH sent >= current mint price * count 
     function mintEarlyAccessSale(bytes32[] memory _merkleProof, uint64 count) public 
-        validateEthPayment(count)
+        validateWEthPayment(count)
         payable {
         _merkleMintWrapper(earlyCounter, MAX_PER_EARLY_ADDRESS, totalEarlyCounter, TOTAL_EARLY_RESERVE,
         count, SalePhase.EARLY_SALE, _merkleProof, earlyAccessMerkleRoot);
@@ -275,7 +304,7 @@ contract FFWClubNFT is ERC721Tradable {
     /// only wallets eligible in this phase can mint if merkle mint is enabled
     /// Accepts ETH. Verifies if ETH sent >= current mint price * count 
     function mintVIPAccessSale(bytes32[] memory _merkleProof, uint64 count) public 
-        validateEthPayment(count)
+        validateWEthPayment(count)
         payable {
         _merkleMintWrapper(vipCounter, MAX_PER_VIP_ADDRESS, totalVIPCounter, TOTAL_VIP_RESERVE,
         count, SalePhase.VIP_SALE, _merkleProof, VIPAccessMerkleRoot);
@@ -285,7 +314,7 @@ contract FFWClubNFT is ERC721Tradable {
     /// only wallets eligible in this phase can mint if merkle mint is enabled
     /// Accepts ETH. Verifies if ETH sent >= current mint price * count 
     function mintPresale(bytes32[] memory _merkleProof, uint64 count) public 
-        validateEthPayment(count)
+        validateWEthPayment(count)
         payable {
         _merkleMintWrapper(presaleCounter, MAX_PER_PRESALE_ADDRESS, totalPresaleCounter, TOTAL_PRESALE_RESERVE,
         count, SalePhase.PRESALE, _merkleProof, whitelistMerkleRoot);
@@ -307,6 +336,7 @@ contract FFWClubNFT is ERC721Tradable {
         require(totalReserve + count <= totalReserveLimit, "exceeding total vip limit");
         counter[_msgSender()] += count;
         totalReserve += count;
+        transferTokens(mintPrice * count);
         _mintWhitelist(merkleRoot, _merkleProof, count, merkleMintVerficationEnabled);
     }
 
@@ -338,11 +368,12 @@ contract FFWClubNFT is ERC721Tradable {
     /// Public Mint accessible to anyone once public sale phase is enabled
     /// Accepts ETH. Verifies if ETH sent >= current mint price * count 
     function mintTo(address _to, uint64 count) public
-        validateEthPayment(count)
+        validateWEthPayment(count)
         payable {
         require(phase == SalePhase.PUBLICSALE, "notfor public sale yet");
         require(publicsaleCounter[_msgSender()] + count <= MAX_PER_PUBLICSALE_ADDRESS, "exceeding max limit per wallet");
         publicsaleCounter[_msgSender()] += count;
+        transferTokens(mintPrice * count);
         _mint(_to, count);
     }
 
@@ -357,6 +388,21 @@ contract FFWClubNFT is ERC721Tradable {
 		);
 		for (uint256 i; i < payees_.length; i++) {
 			makePaymentTo(payees_[i], amounts_[i]);
+		}
+    }
+
+    /// Send ETH held by contract. Only Owner.
+    /// @custom:only-owner
+    function disburseWETHPayments(
+		address[] memory payees_,
+		uint256[] memory amounts_
+	) external onlyOwner {
+	    require(payees_.length == amounts_.length,
+			"Payees and amounts size mismatch"
+		);
+		for (uint256 i; i < payees_.length; i++) {
+            WETH.approve(payees_[i], amounts_[i]);
+            WETH.transfer(payees_[i], amounts_[i]);
 		}
     }
 
@@ -378,10 +424,34 @@ contract FFWClubNFT is ERC721Tradable {
         _;
 	}
 
+    /// Modifier to validate WETH payments on payable functions
+	/// @dev compares the product of the state variable `_mintPrice` and supplied `count` to msg.value
+	/// @param count factor to multiply by
+	modifier validateWEthPayment(uint256 count) {
+        uint256 requiredAmount = mintPrice * count;
+        uint256 senderBalance = WETH.balanceOf(_msgSender());
+        console.log("validateWEthPayment %s, %s, %s", requiredAmount, senderBalance, _msgSender());
+		require(
+			requiredAmount <= senderBalance,
+			"Insufficient WETH"
+		);
+        _;
+	}
+
     /// an NFT owner can burn their NFTs
     function burn(uint256 tokenId) public {
         address owner = ownerOf(tokenId);
         require(owner == _msgSender(), "no permissions");
         _burn(tokenId);
+    }
+
+    /// Transfer WETH tokens into contract
+    function transferTokens(uint256 amount) private returns (uint256) {
+        console.log("TransferTokens: %s", amount);
+        uint256 initialBal = WETH.balanceOf(address(this));
+        WETH.transferFrom(_msgSender(), address(this), amount);
+        uint256 finalBal = WETH.balanceOf(address(this));
+        require((finalBal - initialBal) == amount, "Could not recieve tokens");
+        return (amount);
     }
 }

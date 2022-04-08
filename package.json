@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "hardhat-node": "npx hardhat node --fork https://rinkeby.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161 --port 7545",
+    "hardhat-node": "npx hardhat node --fork https://speedy-nodes-nyc.moralis.io/e814489705c92e61b62a5fbc/polygon/mainnet --port 7545",
     "generate-docs": "npx https://github.com/OpenZeppelin/solidity-docgen --solc-module solc-0.8"
   },
   "keywords": [],

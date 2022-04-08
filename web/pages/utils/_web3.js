@@ -17,10 +17,10 @@ const contractABI = require("/data/SampleNFT.json");
 console.log({provider: Web3.givenProvider})
 web3.eth.net.getId()
 .then(console.log);
-const acceptedChains = ENVIRONMENT === 'development' ? [4, 1337] : [1];
+const acceptedChains = ENVIRONMENT === 'development' ? [4, 1337, 80001] : [1, 137];
 
 export const sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
-export const explorer = ENVIRONMENT === 'development' ? 'https://rinkeby.etherscan.io/tx/' : 'https://etherscan.io/tx/'
+export const explorer = ENVIRONMENT === 'development' ? 'https://mumbai.polygonscan.com/tx/' : 'https://polygonscan.com/tx/'
 
 export const injected = new InjectedConnector({ supportedChainIds: acceptedChains, });
 export const walletConnect = new WalletConnectConnector({
@@ -33,11 +33,33 @@ export const walletlink = new WalletLinkConnector({
   supportedChainIds: acceptedChains,
 })
 
+export const parseWeb3Error = (err) => {
+  const startIndex = JSON.stringify(err.message).search('{')
+  const endIndex = JSON.stringify(err.message).search('}')
+  let errorJson = JSON.stringify(err.message).substring(startIndex, endIndex+1).split('\\n').join('').split('\\').join('')
+  console.warn(errorJson)
+  errorJson = JSON.parse(errorJson)
+  return errorJson
+}
+
 export const mintWithProof = async (account, proof, method, qty) => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     console.log('minting...', account, method);
+    web3.eth.handleRevert = true
+    try {
+      let gas = await sampleNFT.methods[method](proof, qty).estimateGas({from: account})
+    } catch(err) {
+      console.error('minting will fail', err.message)
+      let errorJson = parseWeb3Error(err)
+      resolve({
+        success: false,
+        status: `${errorJson.message}`,
+        url: null
+      })
+      return;
+    }
     sampleNFT.methods[method](proof, qty).send({ from: account })
-    .on('transactionHash', function(hash){
+    .on('transactionHash', function(hash) {
       console.log('transactionHash', hash)
     })
     .on('confirmation', function(confirmationNumber, receipt){
@@ -45,7 +67,7 @@ export const mintWithProof = async (account, proof, method, qty) => {
         console.log('tx confirmation', confirmationNumber, receipt)
         resolve({
           success: true,
-          status: `✅ Check out your transaction on Etherscan`,
+          status: `Check out your transaction`,
           url: `${explorer}${receipt.transactionHash}`
         });
       }
@@ -55,7 +77,7 @@ export const mintWithProof = async (account, proof, method, qty) => {
       if(receipt)
         resolve({
           success: false,
-          status: "😥 Something went wrong: " + error.message,
+          status: "Something went wrong: " + error.message,
           url: `${explorer}${receipt.transactionHash}`
         })
       else 
@@ -68,62 +90,52 @@ export const mintWithProof = async (account, proof, method, qty) => {
   })
 };
 
-export const mintGift = async (account, proof) => {
-  console.log('minting gift...');
-  const result = sampleNFT.methods.mintGift(proof).send({ from: account }).then((result) => {
-      return {
-        success: true,
-        status: `✅ Check out your transaction on Etherscan: https://etherscan.io/tx/` + result
-        };
-  }).catch((err) => {
-    return {
-      success: false,
-      status: "😥 Something went wrong: " + err.message
-      }
-  });
-  return result;
-};
-
-export const mintWhitelist = async (account, proof) => {
-  console.log('minting whitelist...');
-  const amount = '0.01';
-    const amountToWei = web3.utils.toWei(amount, 'ether');
-  const result = sampleNFT.methods.mintWhitelist(proof).send({ from: account, value: amountToWei }).then((result) => {
-    console.log(`✅ Check out your transaction on Etherscan: https://etherscan.io/tx/` + result);
-      return {
-        success: true,
-        status: `✅ Check out your transaction on Etherscan: https://etherscan.io/tx/` + result
-        };
-  }).catch((err) => {
-    console.log("Mint transaction failed!");
-    return {
-      success: false,
-      status: "😥 Something went wrong: " + err.message
-      }
-  }).finally((result) => {
-    return result;
-  });
-  return result;
-}
-
-  export const mintPublic = async (account, numberOfTokens) => {
+export const mintPublic = async (account, numberOfTokens) => {
+  return new Promise(async (resolve, reject) => {
     console.log('minting publicMint...');
-    const amount = (numberOfTokens * 0.02).toString();
-    const amountToWei = web3.utils.toWei(amount, 'ether');
-    const result = sampleNFT.methods.publicMint(numberOfTokens).send({ from: account, value: amountToWei }).then((result) => {
-      console.log(`✅ Check out your transaction on Etherscan: https://etherscan.io/tx/` + result);
-        return {
-          success: true,
-          status: `✅ Check out your transaction on Etherscan: https://etherscan.io/tx/` + result
-          };
-    }).catch((err) => {
-      console.log("Mint transaction failed!");
-      return {
+    try {
+      let gas = await sampleNFT.methods.mintTo(account, numberOfTokens).estimateGas({from: account})
+    } catch(err) {
+      console.error('public minting will fail', err.message)
+      let errorJson = parseWeb3Error(err)
+      resolve({
         success: false,
-        status: "😥 Something went wrong: " + err.message
-        }
+        status: `${errorJson.message}`,
+        url: null
+      })
+      return;
+    }
+
+    sampleNFT.methods.mintTo(account, numberOfTokens).send({ from: account })
+    .on('transactionHash', function(hash) {
+      console.log('transactionHash', hash)
+    })
+    .on('confirmation', function(confirmationNumber, receipt){
+      if(confirmationNumber == 1 && receipt.status) {
+        console.log('tx confirmation', confirmationNumber, receipt)
+        resolve({
+          success: true,
+          status: `Check out your transaction`,
+          url: `${explorer}${receipt.transactionHash}`
+        });
+      }
+    })
+    .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+      console.log('tx error', error, error.message, receipt)
+      if(receipt)
+        resolve({
+          success: false,
+          status: "Something went wrong: " + error.message,
+          url: `${explorer}${receipt.transactionHash}`
+        })
+      else 
+        resolve({
+          success: false,
+          status: null,
+          url: null
+        })
     });
-    return result;
+  })
 };
 
 export function abridgeAddress(hex, length = 4) {

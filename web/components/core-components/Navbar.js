@@ -11,10 +11,11 @@ const Navbar = ({ navLinks }) => {
       }}
     >
       <Stack direction="row" spacing={4}>
-        {navLinks.map(({ title, path }, i) => (
+        {navLinks.map(({ title, path, target }, i) => (
           <MuiNextLink
             key={`${title}${i}`}
             href={path}
+            target={target}
             variant="button"
             sx={{ fontSize: '20px', opacity: 0.7, color: 'primary.dark', textDecoration: 'none', textTransform: 'none' }}
           >

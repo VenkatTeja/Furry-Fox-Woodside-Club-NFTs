@@ -1,14 +1,127 @@
-import { Button, Card, CardActions, CardContent, Container, Item, Grid, Paper, Input, Typography } from '@mui/material';
+import { Button, Card, CardActions, CardContent, Container, Item, Grid, Paper, Input, Typography, Alert } from '@mui/material';
+import { sampleNFT } from '@pages/utils/_web3';
+import { useWeb3React } from '@web3-react/core';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import Web3 from 'web3';
 
-const MintNFTCard = ({title, description, action, canMint, showNumToMint, 
-  numToMint, setNumToMint, mintStatus, loading, mintPrice, imageUrl}) => {
-  const handleChange = (event) => {
-    const numToMint = parseInt(event.target.value);
-    setNumToMint(numToMint);
-  };
+const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToMint, setNumToMint, mintStatus, loading, mintPrice, imageUrl, ownedNFTs, maxLimit}) => {
+
+    const { active, account, chainId } = useWeb3React();
+
+    const [checking, setChecking] = useState(true);
+    const [waiting, setWaiting] = useState(false)
+    const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
+    const [shouldApprove, setShouldApprove] = useState(true);
+    const web3 = new Web3(Web3.givenProvider)
+    let WETH = null;
+    
+    const WETHContract = async () => {
+      if(WETH)
+        return WETH
+      let tokenAddress = await sampleNFT.methods.WETH().call()
+      console.log('tokenaddress', tokenAddress)
+      const ERC20ABI = require("/data/ERC20.json");
+      WETH = new web3.eth.Contract(ERC20ABI.abi, tokenAddress);
+      return WETH
+    }
+
+    const handleChange = (event) => {
+      const _numToMint = parseInt(event.target.value);
+      setNumToMint(_numToMint);
+    };
+
+    const approveToken = async () => {
+      try {
+        setWaiting(true)
+        await WETHContract()
+        let allowance = web3.utils.toWei('10')
+        let requiredAllowance = getRequiredAllowance()
+        if(requiredAllowance.gte(allowance))
+          allowance = requiredAllowance.toString()
+        console.log('approving token', allowance)
+        await WETH.methods.approve(process.env.NEXT_PUBLIC_NFT_ADDRESS, allowance).send({ from: account })
+        .on('transactionHash', function(hash) {
+          console.log('transactionHash', hash)
+        })
+        .on('confirmation', function(confirmationNumber, receipt){
+          if(confirmationNumber == 1 && receipt.status) {
+            console.log('tx confirmation', confirmationNumber, receipt)
+            setMessage('Token approved')
+            setTimeout(()=>{
+              setMessage('')
+            }, 5000)
+            setWaiting(false)
+            checkTokenAllowance()
+          }
+        })
+        .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+          console.log('tx error', error, error.message, receipt)
+          setError('Transaction failed')
+          setTimeout(()=>{
+            setError('')
+          }, 5000)
+          setWaiting(false)
+        });
+      } catch (err) {
+        console.error('approveToken err', err)
+        setWaiting(false)
+      }
+    }
+
+    const getRequiredAllowance = () => {
+      console.log(mintPrice*1000)
+        let requiredAllowance = web3.utils.toWei(web3.utils.toBN(parseInt(mintPrice*1000)), 'milli').mul(web3.utils.toBN(numToMint))
+          console.log('required allownace', requiredAllowance.toString(), title)
+        return requiredAllowance
+    }
+
+    const checkTokenAllowance = async () => {
+      try {
+        setChecking(true)
+        setError('')
+        console.log('number to mint', numToMint)
+        if(!numToMint || numToMint < 1) {
+          return setError('Quantity must be at least 1')
+        }
+        if(!Number.isInteger(numToMint)) {
+          return setError('Quantity must a integer')
+        }
+        // Check if token is already allowed
+        await WETHContract()
+        let allowance = await WETH.methods.allowance(account, process.env.NEXT_PUBLIC_NFT_ADDRESS).call()
+        console.log('allowance', {allowance, mintPrice, numToMint, bn: web3.utils.toWei(mintPrice+'')})
+        let requiredAllowance = getRequiredAllowance()
+        if(requiredAllowance.lte(web3.utils.toBN(allowance)))
+          setShouldApprove(false)
+        else
+          setShouldApprove(true)
+        setChecking(false)
+        // let inWei = ethers.utils.parseUnits(this.betAmount.toString(), this.globalService.TokenDecimals)
+        // let weiToEther = ethers.utils.formatUnits(inWei, this.globalService.TokenDecimals)
+        // console.log({ betAmount: this.betAmount.toString(), inWei: inWei.toString(), weiToEther, allownace: allowance[0].toNumber() })
+        // if (allowance.length > 0 && allowance[0].gte(inWei)) {
+        //   this.isTokenAllowed = true;
+        //   console.log('token allowed')
+        // } else {
+        //   this.isTokenAllowed = false
+        // }
+        // this.loader.loaderEnd()
+      } catch (err) {
+        console.error(err)
+        setError('Something went wrong while checking wETH allowance')
+        setChecking(false)
+        
+      }
+    }
+
+    useEffect(()=> {
+      checkTokenAllowance()
+    }, [account, numToMint])
 
   return (
+    <>
     <Paper
       sx={{
         p: 2,
@@ -25,7 +138,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint,
         <Grid item xs={12} sm container>
           <Grid item xs container direction="column" spacing={2}>
             <Grid item xs>
-              <Typography variant="h5" sx={{ fontSize: 14, color: "text.primary", marginBottom: '10px' }}>
+              <Typography variant="h5" sx={{ fontSize: 14, color: "text.primary", marginBottom: '10px', fontFamily: 'IntegralCF' }}>
                 {title}
               </Typography>
               
@@ -33,30 +146,46 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint,
                 {mintStatus ? "Success! Check your wallet in a few minutes."
                   : description}
               </Typography>
+              <Typography variant="body1" color="text.secondary"
+                sx={{marginTop: '20px'}}>
+                This wallet owns {ownedNFTs} NFTs
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {maxLimit} NFTs are allowed per wallet
+              </Typography>
             </Grid>
             <Grid item>
-              {loading ? (
-                <CardActions>Loading....</CardActions>) : (
-                <CardActions>
-                  {showNumToMint &&
-                    <Input onChange={handleChange} defaultValue={numToMint} type="number" label="Quantity to mint"
-                      sx={{mx: 3, marginLeft: 0}}
-                    />}
-                  <Button disabled={canMint} onClick={action} variant="contained">Mint</Button>
-                </CardActions>
-              )}
+              <CardActions>
+                {showNumToMint &&
+                  <Input onChange={handleChange} defaultValue={numToMint} type="number" placeholder="Quantity to mint"
+                    sx={{mx: 3, marginLeft: 0}}
+                  />}
+                {(loading || checking) ? ("Loading...") : (
+                  <>
+                    {shouldApprove &&   
+                    <Button disabled={!canMint || waiting} onClick={approveToken} variant="contained">Approve wETH</Button>}
+                    {!shouldApprove && 
+                    <Button disabled={!canMint || waiting} onClick={action} variant="contained">Mint</Button>}
+                  </>
+                )}
+              </CardActions>
             </Grid>
           </Grid>
           <Grid item>
             <Typography variant="h6" component="div">
-              {mintPrice} ETH
+              {mintPrice} wETH
             </Typography>
           </Grid>
         </Grid>
             
             
       </Grid>
+      
     </Paper>
+    {error && <Alert variant='filled' severity="warning" onClose={() => {setError('')}}>{error}</Alert>}
+    {waiting && <Alert variant='filled' severity="info">Waiting for transaction to complete</Alert>}
+    {message && <Alert variant='filled' severity="success" onClose={() => {setMessage('')}}>{message}</Alert>}
+    </>
   );
 }
 

@@ -13,14 +13,43 @@ import KeyboardArrowUp from "@mui/icons-material/KeyboardArrowUp";
 import BackToTop from "@components/core-components/BackToTop";
 import Connect from "@components/web3/connect";
 import { Stack } from "@mui/material";
+import { useWeb3React } from '@web3-react/core';
+import { useEffect, useState } from "react";
+
 
 const Offset = styled("div")(({ theme }) => theme.mixins.toolbar);
 
-export const navLinks = [
-  { title: 'HOME', path: '/#home' },
+export let navLinks = [
+  { title: 'About', path: 'https://furryfoxwoodside.club/', target: '_self' }
 ];
 
+
+
 const Header = () => {
+  const { active, account, chainId } = useWeb3React();
+
+  const [isReady, setReady] = useState(true)
+  let openseaLink = 'opensea.io'
+  if(process.env.NEXT_PUBLIC_ENVIRONMENT == 'development')
+    openseaLink = 'testnets.opensea.io'
+  
+  useEffect(()=>{
+    setReady(false)
+    if(account) {
+      let containsYourNFTsLink = false;
+      navLinks.forEach(item => {
+        if(item.title == 'Your NFTs')
+          containsYourNFTsLink = true
+      })
+      if(!containsYourNFTsLink)
+        navLinks.push(
+          { title: 'Your NFTs', path: `https://${openseaLink}/${account}?search[chains][0]=MUMBAI`,
+          target: '_blank'},
+        )
+        setReady(true)
+      }
+  }, [account])
+
   return (
     <>
     {/* <HideOnScroll> */}
@@ -41,8 +70,11 @@ const Header = () => {
                 </MuiNextLink>
               </IconButton>
               <Stack direction="row" alignItems='center'>
-                <Navbar navLinks={navLinks} />
-                <SideDrawer navLinks={navLinks} />
+                {isReady && 
+                  <>
+                    <Navbar navLinks={navLinks} />
+                    <SideDrawer navLinks={navLinks} />
+                  </>}
                 <Connect />
               </Stack>
             </Container>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from 'next/router';
 import Button from '@mui/material/Button';
 import { styled as muiStyled, alpha } from '@mui/material/styles';
@@ -8,13 +8,16 @@ import { useWeb3React } from '@web3-react/core';
 import { abridgeAddress, injected, useENSName, walletConnect, walletlink } from '@pages/utils/_web3';
 import ConnectModal from "@components/web3/connectModal";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { Box } from "@mui/material";
+import { Box, Chip } from "@mui/material";
+import { sampleNFT } from '@pages/utils/_web3';
+import Web3 from 'web3';
 
 export default function Connect() {
   const { activate, deactivate, chainId, active, account, library } = useWeb3React();
   const router = useRouter();
   console.log({chainId,active})
   // for the modal
+  const [balance, setBalance] = useState('0 wETH')
   const [isModalVisible, setIsModalVisible] = useState(false);
   const walletConnectConnector = walletConnect;
   const handleClose = () => setIsModalVisible(false);
@@ -23,6 +26,30 @@ export default function Connect() {
     handleMenuClose();
   };
 
+  let WETH = null;
+  const web3 = new Web3(Web3.givenProvider)
+  const WETHContract = async () => {
+    if(WETH)
+      return WETH
+    let tokenAddress = await sampleNFT.methods.WETH().call()
+    console.log('tokenaddress', tokenAddress)
+    const ERC20ABI = require("/data/ERC20.json");
+    WETH = new web3.eth.Contract(ERC20ABI.abi, tokenAddress);
+    return WETH
+  }
+
+  const fetchBalance = async () => {
+    if(account) {
+      await WETHContract()
+      let balance = await WETH.methods.balanceOf(account).call()
+      let balEther = web3.utils.fromWei(balance)
+      setBalance(`${parseFloat(balEther).toFixed(4)} wETH`)
+    }
+  }
+
+  useEffect(()=>{
+    fetchBalance()
+  }, [active])
   // for the dropdown menu
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -60,7 +87,12 @@ export default function Connect() {
   const ENSName = useENSName(library, account);
 
   return (
+    <>
+    {active && <Chip label={balance} variant="outline"
+                  sx={{background: 'rgb(255 214 68 / 50%)', marginRight: '25px', color: 'black'}} />}
     <Box sx={{textAlign: 'center'}}>
+    
+    
     {!active ? (
       <CustomButton variant="contained"
         disableElevation
@@ -117,6 +149,7 @@ export default function Connect() {
       handleClose={handleClose}
     />
     </ Box>
+    </>
   )
 }
 

@@ -77,7 +77,7 @@ abstract contract ERC721Tradable is ERC721A, ContextMixin, NativeMetaTransaction
     // function tokenURI(uint256 _tokenId) override public view returns (string memory) {
     //     return string(abi.encodePacked(baseTokenURI, Strings.toString(_tokenId)));
     // }
-
+ 
     /**
      * Override isApprovedForAll to whitelist user's OpenSea proxy accounts to enable gas-less listings.
      */

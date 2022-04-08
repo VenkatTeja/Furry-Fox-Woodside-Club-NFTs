@@ -13,6 +13,10 @@ let theme = createTheme({
     text: {
       primary: '#D98D3E',
       secondary: '#C2B9B7'
+    },
+    action: {
+      disabledBackground: 'rgb(183 183 183 / 12%)',
+      disabled: '#fffff'
     }
   },
 });
