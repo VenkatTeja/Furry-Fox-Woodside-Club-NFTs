@@ -46,6 +46,16 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
         isValid = valid;
     }
 
+    const getMintStats = async () => {
+        let result = await sampleNFT.methods[counterMethod](account).call({ from: account })
+        let max = await sampleNFT.methods[maxLimitMethod]().call({from: account})
+        console.log({result, max})
+        setMaxLimit(parseInt(max))
+        setOwnedNFTs(parseInt(result))
+
+        return {mints: result, max: max}
+    }
+
     useEffect(async () => {
         setLoading(true);
         setError('')
@@ -59,12 +69,8 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
         } else {
             try {
                 console.log({methods: sampleNFT.methods[counterMethod], counterMethod, maxLimitMethod, account})
-                let result = await sampleNFT.methods[counterMethod](account).call({ from: account })
-                let max = await sampleNFT.methods[maxLimitMethod]().call({from: account})
-                console.log({result, max})
-                setMaxLimit(parseInt(max))
-                setOwnedNFTs(parseInt(result))
-                let claimable = parseInt(result) < parseInt(max)
+                let {mints, max} = await getMintStats()
+                let claimable = parseInt(mints) < parseInt(max)
                 setClaimable(claimable);
                 if(!claimable) {
                     setLoading(false);
@@ -88,9 +94,16 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
                 console.warn('validateClaim err', err)
                 setClaimable(false)
                 let errorJson = parseWeb3Error(err)
-                if(errorJson && errorJson.message)
-                    setError(errorJson.message.replace('execution reverted:', ''))
-                else
+                if(errorJson && errorJson.message) {
+                    let allowanceMsg = 'transfer amount exceeds allowance'
+                    let err = errorJson.message.replace('execution reverted: ', '')
+                    console.log(err)
+                    if(err.includes(allowanceMsg)) {
+                        setClaimable(true)
+                    } else {
+                        setError(err)
+                    }
+                } else
                     setError('Validation failed')
             });
         }
@@ -103,9 +116,16 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
                 console.warn('validateClaim err', err)
                 setClaimable(false)
                 let errorJson = parseWeb3Error(err)
-                if(errorJson && errorJson.message)
-                    setError(errorJson.message.replace('execution reverted:', ''))
-                else
+                if(errorJson && errorJson.message) {
+                    let allowanceMsg = 'transfer amount exceeds allowance'
+                    let err = errorJson.message.replace('execution reverted: ', '')
+                    console.log(err)
+                    if(err.includes(allowanceMsg)) {
+                        setClaimable(true)
+                    } else {
+                        setError(err)
+                    }
+                } else
                     setError('Validation failed')
             });   
         }
@@ -121,6 +141,8 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
         setMintStatus(success);
         setMintInfo({status, success, url})
         setLoading(false)
+        if(success)
+            getMintStats()
     };
 
     const onMintPublic = async () => {
@@ -131,6 +153,8 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
         setMintStatus(success);
         setMintInfo({status, success, url})
         setLoading(false)
+        if(success)
+            getMintStats()
     };
 
     const resetMintInfo = async () => {

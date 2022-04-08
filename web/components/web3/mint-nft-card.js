@@ -38,7 +38,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         await WETHContract()
         let allowance = web3.utils.toWei('10')
         let requiredAllowance = getRequiredAllowance()
-        if(requiredAllowance.gte(allowance))
+        if(requiredAllowance.gte(web3.utils.toBN(allowance)))
           allowance = requiredAllowance.toString()
         console.log('approving token', allowance)
         await WETH.methods.approve(process.env.NEXT_PUBLIC_NFT_ADDRESS, allowance).send({ from: account })
@@ -71,8 +71,8 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
     }
 
     const getRequiredAllowance = () => {
-      console.log(mintPrice*1000)
-        let requiredAllowance = web3.utils.toWei(web3.utils.toBN(parseInt(mintPrice*1000)), 'milli').mul(web3.utils.toBN(numToMint))
+      console.log(mintPrice*1000000000, mintPrice)
+        let requiredAllowance = web3.utils.toWei(web3.utils.toBN(parseInt(mintPrice*1000000000)), 'gwei').mul(web3.utils.toBN(numToMint))
           console.log('required allownace', requiredAllowance.toString(), title)
         return requiredAllowance
     }
@@ -118,7 +118,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
 
     useEffect(()=> {
       checkTokenAllowance()
-    }, [account, numToMint])
+    }, [account, numToMint, mintPrice])
 
   return (
     <>
