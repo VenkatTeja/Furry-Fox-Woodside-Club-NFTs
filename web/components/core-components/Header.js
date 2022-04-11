@@ -14,13 +14,14 @@ import BackToTop from "@components/core-components/BackToTop";
 import Connect from "@components/web3/connect";
 import { Stack } from "@mui/material";
 import { useWeb3React } from '@web3-react/core';
-import { useEffect, useState } from "react";
+import { useEffect, useState, useReducer } from "react";
 
 
 const Offset = styled("div")(({ theme }) => theme.mixins.toolbar);
 
 export let navLinks = [
-  { title: 'About', path: 'https://furryfoxwoodside.club/', target: '_self' }
+  { title: 'About', path: 'https://furryfoxwoodside.club/', target: '_blank' },
+  { title: 'How to Mint?', path: 'https://bit.ly/3xgbZAH', target: '_blank' }
 ];
 
 
@@ -33,22 +34,25 @@ const Header = () => {
   if(process.env.NEXT_PUBLIC_ENVIRONMENT == 'development')
     openseaLink = 'testnets.opensea.io'
   
+  const [, forceUpdate] = useReducer(x => x + 1, 0);
+
   useEffect(()=>{
     setReady(false)
-    if(account) {
-      let containsYourNFTsLink = false;
-      navLinks.forEach(item => {
-        if(item.title == 'Your NFTs')
-          containsYourNFTsLink = true
-      })
-      if(!containsYourNFTsLink)
-        navLinks.push(
-          { title: 'Your NFTs', path: `https://${openseaLink}/${account}?search[chains][0]=MUMBAI`,
-          target: '_blank'},
-        )
-        setReady(true)
+      if(account) {
+        let containsYourNFTsLink = false;
+        navLinks.forEach(item => {
+          if(item.title == 'Your NFTs')
+            containsYourNFTsLink = true
+        })
+        if(!containsYourNFTsLink)
+          navLinks.push(
+            { title: 'Your NFTs', path: `https://${openseaLink}/${account}?search[chains][0]=MUMBAI`,
+            target: '_blank'},
+          )
+        forceUpdate()
       }
-  }, [account])
+      setReady(true)
+    }, [account])
 
   return (
     <>

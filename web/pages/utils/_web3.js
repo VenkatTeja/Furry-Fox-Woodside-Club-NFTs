@@ -22,16 +22,41 @@ const acceptedChains = ENVIRONMENT === 'development' ? [4, 1337, 80001] : [1, 13
 export const sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
 export const explorer = ENVIRONMENT === 'development' ? 'https://mumbai.polygonscan.com/tx/' : 'https://polygonscan.com/tx/'
 
-export const injected = new InjectedConnector({ supportedChainIds: acceptedChains, });
+export const injected = new InjectedConnector({});
 export const walletConnect = new WalletConnectConnector({
   infuraId: INFURA_ID,
-  supportedChainIds: acceptedChains,
+  // supportedChainIds: acceptedChains,
 });
 
-export const walletlink = new WalletLinkConnector({
-  appName: 'NFT Minting Scaffold',
-  supportedChainIds: acceptedChains,
-})
+export function activateInjectedProvider(providerName) {
+  /*
+    providerName: 'MetaMask' | 'CoinBase'
+  */
+  const { ethereum } = window;
+
+  if (!ethereum?.providers) {
+      return undefined;
+  }
+
+  let provider;
+  switch (providerName) {
+      case 'CoinBase':
+          provider = ethereum.providers.find(({ isCoinbaseWallet }) => isCoinbaseWallet);
+          break;
+      case 'MetaMask':
+          provider = ethereum.providers.find(({ isMetaMask }) => isMetaMask);
+          break;
+  }
+
+  if (provider) {
+      ethereum.setSelectedProvider(provider);
+  }
+}
+
+// export const walletlink = new WalletLinkConnector({
+//   appName: 'NFT Minting Scaffold',
+//   supportedChainIds: acceptedChains,
+// })
 
 export const parseWeb3Error = (err) => {
   const startIndex = JSON.stringify(err.message).search('{')

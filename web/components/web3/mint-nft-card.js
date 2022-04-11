@@ -4,12 +4,14 @@ import { useWeb3React } from '@web3-react/core';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import Web3 from 'web3';
+import styles from '../../styles/Home.module.css';
 
 const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToMint, setNumToMint, mintStatus, loading, mintPrice, imageUrl, ownedNFTs, maxLimit}) => {
 
     const { active, account, chainId } = useWeb3React();
 
     const [checking, setChecking] = useState(true);
+    const [disabled, setDisabled] = useState(false);
     const [waiting, setWaiting] = useState(false)
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
@@ -83,9 +85,13 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         setError('')
         console.log('number to mint', numToMint)
         if(!numToMint || numToMint < 1) {
+          setDisabled(true)
+          setChecking(false)
           return setError('Quantity must be at least 1')
         }
         if(!Number.isInteger(numToMint)) {
+          setDisabled(true)
+          setChecking(false)
           return setError('Quantity must a integer')
         }
         // Check if token is already allowed
@@ -98,6 +104,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         else
           setShouldApprove(true)
         setChecking(false)
+        setDisabled(false)
         // let inWei = ethers.utils.parseUnits(this.betAmount.toString(), this.globalService.TokenDecimals)
         // let weiToEther = ethers.utils.formatUnits(inWei, this.globalService.TokenDecimals)
         // console.log({ betAmount: this.betAmount.toString(), inWei: inWei.toString(), weiToEther, allownace: allowance[0].toNumber() })
@@ -112,7 +119,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         console.error(err)
         setError('Something went wrong while checking wETH allowance')
         setChecking(false)
-        
+        setDisabled(true)
       }
     }
 
@@ -123,15 +130,14 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
   return (
     <>
     <Paper
+      className=""
       sx={{
         p: 2,
-        margin: 'auto',
-        width: 1000,
         flexGrow: 1,
         backgroundColor:'#171717'
       }}>
       <Grid container spacing={2}>
-        <Grid item xs={3}>
+        <Grid item xs={12} md={3}>
             <Image alt="sample NFT" src={imageUrl} layout="responsive" width={'100vw'} height={'100%'}/>
         </Grid>
         
@@ -163,9 +169,9 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
                 {(loading || checking) ? ("Loading...") : (
                   <>
                     {shouldApprove &&   
-                    <Button disabled={!canMint || waiting} onClick={approveToken} variant="contained">Approve wETH</Button>}
+                    <Button disabled={!canMint || waiting || disabled} onClick={approveToken} variant="contained">Approve wETH</Button>}
                     {!shouldApprove && 
-                    <Button disabled={!canMint || waiting} onClick={action} variant="contained">Mint</Button>}
+                    <Button disabled={!canMint || waiting || disabled} onClick={action} variant="contained">Mint</Button>}
                   </>
                 )}
               </CardActions>

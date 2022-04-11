@@ -162,9 +162,10 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
     }
     return (
         <>
-            <Grid item className={styles.mintContainer}>
+            <Grid item xs={0} md={1} lg={2}></Grid>
+            <Grid item xs={12} md={10} lg={8}>
                 {(loading && 0) ? (
-                    <Card sx={{  width: 600 }}>
+                    <Card>
                         <CardContent>
                             <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                 loading...
@@ -201,8 +202,9 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
                         )}
                     </>
                 )}
+                {error && <Alert variant='outline' severity="warning" onClose={() => {setError("")}}>{error}</Alert>}
             </Grid>
-            {error && <Alert variant='outline' severity="warning" onClose={() => {setError("")}}>{error}</Alert>}
+            <Grid item xs={0} md={1} lg={2}></Grid>
         </>
     );
 }

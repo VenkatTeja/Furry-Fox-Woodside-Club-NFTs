@@ -35,7 +35,7 @@ const MintNFT = () => {
   const [numToMint, setNumToMint] = useState(1);
 
   useEffect(() => {
-    if (!active || !account) {
+    if (!active || !account || chainId !=process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID) {
       setAlreadyClaimed(false);
       return;
     }
@@ -92,7 +92,7 @@ const MintNFT = () => {
 
   return (
     <>
-      <Stack id="demo" sx={{bgColor: 'secondary.main'}}>
+      <Stack id="demo" sx={{bgColor: 'secondary.main', width: '100%'}}>
         <Typography variant="h4" color='primary.main' sx={{textAlign: 'center', paddingTop: 5, paddingBottom: 5, fontFamily: 'IntegralCF'}}>Mint an NFT</Typography>
         {phase==0 && <Typography variant="body1" color='primary.main' sx={{textAlign: 'center', paddingTop: 5, paddingBottom: 5, fontFamily: 'IntegralCF'}}>Sale is not open yet</Typography>}
         <Grid container spacing={3} justifyContent="center" alignItems="center">

@@ -3,9 +3,23 @@ import Modal from '@mui/material/Modal';
 import styled from 'styled-components';
 import Image from 'next/image';
 import Stack from '@mui/material/Stack';
+// import { initializeConnector } from '@web3-react/core'
+// import { MetaMask } from '@web3-react/metamask'
+// import { InjectedConnector } from "@web3-react/injected-connector";
 
 export default function ConnectModal(props) {
   const { isModalVisible, handleClose, handleLoginClick } = props;
+
+  // const connectMetamask = async () => {
+  //   console.log('initializeConnector', initializeConnector)
+  //   const injected = new InjectedConnector({ supportedChainIds: [80001], });
+  //   console.log('injected', injected)
+  //   const [metaMask, hooks] = initializeConnector<MetaMask>((actions) => new MetaMask(actions))
+  //   metaMask.activate(process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID)
+  //   console.log('connected matamask')
+  //   // handleLoginClick('metamask')
+  // }
+
   return (
     <>
       <Modal
@@ -15,22 +29,6 @@ export default function ConnectModal(props) {
       >
         <Box sx={style}>
         <Stack>
-          <Coinbase onClick={() => handleLoginClick('coinbase')}>
-            <Image
-              src="/wallets/coinbase.png"
-              height={55}
-              width={320}
-              alt="login with Coinbase Wallet!"
-            />
-          </Coinbase>
-          <WalletConnect onClick={() => handleLoginClick('walletconnect')}>
-          <Image
-              src="/wallets/walletconnect.svg"
-              height={100}
-              width={300}
-              alt="login with Wallet Connect!"
-            />
-          </WalletConnect>
           <Metamask onClick={() => handleLoginClick('metamask')}>
             <Image
               src="/wallets/metamask.svg"
@@ -39,6 +37,14 @@ export default function ConnectModal(props) {
               alt="login with Metamask!"
             />
           </Metamask>
+          <WalletConnect onClick={() => handleLoginClick('walletconnect')}>
+          <Image
+              src="/wallets/walletconnect.svg"
+              height={100}
+              width={300}
+              alt="login with Wallet Connect!"
+            />
+          </WalletConnect>
           <CloseModal>
             <div className="close-inner" onClick={() => handleClose()}>
               Close

@@ -5,17 +5,18 @@ import { styled as muiStyled, alpha } from '@mui/material/styles';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useWeb3React } from '@web3-react/core';
-import { abridgeAddress, injected, useENSName, walletConnect, walletlink } from '@pages/utils/_web3';
+import { abridgeAddress, injected, useENSName, walletConnect, activateInjectedProvider } from '@pages/utils/_web3';
 import ConnectModal from "@components/web3/connectModal";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { Box, Chip } from "@mui/material";
 import { sampleNFT } from '@pages/utils/_web3';
 import Web3 from 'web3';
+import { InjectedConnector } from "@web3-react/injected-connector";
 
 export default function Connect() {
   const { activate, deactivate, chainId, active, account, library } = useWeb3React();
   const router = useRouter();
-  console.log({chainId,active})
+  console.log({chainId,active, activate})
   // for the modal
   const [balance, setBalance] = useState('0 wETH')
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -39,7 +40,7 @@ export default function Connect() {
   }
 
   const fetchBalance = async () => {
-    if(account) {
+    if(account && chainId==process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID) {
       await WETHContract()
       let balance = await WETH.methods.balanceOf(account).call()
       let balEther = web3.utils.fromWei(balance)
@@ -65,9 +66,8 @@ export default function Connect() {
   }
 
   const handleLoginClick = async (type) => {
-    if (type === 'coinbase') {
-      await activate(walletlink);
-    } else if (type === 'metamask') {
+    if (type === 'metamask') {
+      activateInjectedProvider('MetaMask')
       await activate(injected);
     } else {
       await activate(walletConnectConnector);
