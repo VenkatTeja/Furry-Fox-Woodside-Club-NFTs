@@ -10,23 +10,36 @@ console.log('loaded web3')
 const INFURA_ID =  process.env.NEXT_PUBLIC_INFURA_ID;
 const NFT_ADDRESS = process.env.NEXT_PUBLIC_NFT_ADDRESS;
 const ENVIRONMENT = process.env.NEXT_PUBLIC_ENVIRONMENT;
-
-const web3 = new Web3(Web3.givenProvider)
+const SUPPORTED_CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID)
+export let web3 = new Web3(Web3.givenProvider)
 const contractABI = require("/data/SampleNFT.json");
 
-console.log({provider: Web3.givenProvider})
-web3.eth.net.getId()
-.then(console.log);
-const acceptedChains = ENVIRONMENT === 'development' ? [4, 1337, 80001] : [1, 137];
+const acceptedChains = [SUPPORTED_CHAIN_ID]
 
-export const sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
+export let sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
 export const explorer = ENVIRONMENT === 'development' ? 'https://mumbai.polygonscan.com/tx/' : 'https://polygonscan.com/tx/'
 
 export const injected = new InjectedConnector({});
+let rpcObj = {}
+rpcObj[SUPPORTED_CHAIN_ID] = `${process.env.NEXT_PUBLIC_HOST}/rpc`
 export const walletConnect = new WalletConnectConnector({
-  infuraId: INFURA_ID,
+  // infuraId: INFURA_ID,
+  rpc: rpcObj,
+  bridge: 'https://bridge.walletconnect.org',
+  qrcode: true,
+  pollingInterval: 10000
   // supportedChainIds: acceptedChains,
 });
+
+export let refreshWalletConnectProvider = async () => {
+  web3 = new Web3(await walletConnect.getProvider())
+  sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
+}
+
+export let refreshMetamaskProvider = async () => {
+  web3 = new Web3(Web3.givenProvider)
+  sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
+}
 
 export function activateInjectedProvider(providerName) {
   /*
@@ -59,12 +72,18 @@ export function activateInjectedProvider(providerName) {
 // })
 
 export const parseWeb3Error = (err) => {
+  console.log('parseWeb3Error', err, err.message)
   const startIndex = JSON.stringify(err.message).search('{')
-  const endIndex = JSON.stringify(err.message).search('}')
-  let errorJson = JSON.stringify(err.message).substring(startIndex, endIndex+1).split('\\n').join('').split('\\').join('')
-  console.warn(errorJson)
-  errorJson = JSON.parse(errorJson)
-  return errorJson
+  if(startIndex > 0) {
+    const endIndex = JSON.stringify(err.message).search('}')
+    let errorJson = JSON.stringify(err.message).substring(startIndex, endIndex+1).split('\\n').join('').split('\\').join('')
+    console.warn(errorJson)
+    errorJson = JSON.parse(errorJson)
+    return errorJson
+  } else {
+    console.log('is error type 2')
+    return {message: err.message}
+  }
 }
 
 export const mintWithProof = async (account, proof, method, qty) => {

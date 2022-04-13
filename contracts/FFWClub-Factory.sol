@@ -36,6 +36,8 @@ contract FFWClubFactory is FactoryERC721, Ownable {
         proxyRegistryAddress = _proxyRegistryAddress;
         nftAddress = _nftAddress;
 
+        FFWClubNFT nft = FFWClubNFT(nftAddress);
+        NUM_OPTIONS = nft.MAX_SUPPLY();
         fireTransferEvents(address(0), owner());
     }
 
@@ -74,15 +76,17 @@ contract FFWClubFactory is FactoryERC721, Ownable {
 
     function mint(uint256 _optionId, address _toAddress) override public {
         // Must be sent from the owner proxy or owner.
-        ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
-        assert(
-            address(proxyRegistry.proxies(owner())) == _msgSender() ||
-                owner() == _msgSender()
-        );
-        require(canMint(_optionId));
-
+        console.log("mint sender: %s", _msgSender());
+        // ProxyRegistry proxyRegistry = ProxyRegistry(proxyRegistryAddress);
+        // require(
+        //     address(proxyRegistry.proxies(owner())) == _msgSender() ||
+        //         owner() == _msgSender()
+        // , "Proxy registry assert failed");
+        // require(canMint(_optionId), "Mint with this option id not allowed");
+        
+        // to accept WETH from 
         FFWClubNFT nft = FFWClubNFT(nftAddress);
-        nft.mintTo(_msgSender(), 1);
+        nft.mintToWithDifferentPayee(_msgSender(), _toAddress, 1);
     }
 
     function canMint(uint256 _optionId) override public view returns (bool) {

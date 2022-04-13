@@ -13,10 +13,11 @@ async function main() {
 
     console.log("NFT deployed to:", nft.address);
 
-    // set team merkle tree root
-    let mintPrice = ethers.utils.parseEther('0.000000002').toString()
-    const tx = await nft.setPhaseAndMintPrice(4, mintPrice)
-    await tx.wait()
+    console.log(await nft.WETH())
+    // // set team merkle tree root
+    // let mintPrice = ethers.utils.parseEther('0.000000002').toString()
+    // const tx = await nft.setPhaseAndMintPrice(4, mintPrice)
+    // await tx.wait()
     console.log('price set')
 }
 

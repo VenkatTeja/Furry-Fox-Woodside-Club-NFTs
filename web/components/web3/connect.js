@@ -9,7 +9,7 @@ import { abridgeAddress, injected, useENSName, walletConnect, activateInjectedPr
 import ConnectModal from "@components/web3/connectModal";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { Box, Chip } from "@mui/material";
-import { sampleNFT } from '@pages/utils/_web3';
+import { sampleNFT, refreshMetamaskProvider, refreshWalletConnectProvider, web3 } from '@pages/utils/_web3';
 import Web3 from 'web3';
 import { InjectedConnector } from "@web3-react/injected-connector";
 
@@ -19,6 +19,7 @@ export default function Connect() {
   console.log({chainId,active, activate})
   // for the modal
   const [balance, setBalance] = useState('0 wETH')
+  const [isWalletConnectReady, setWalletConnectReady] = useState(false)
   const [isModalVisible, setIsModalVisible] = useState(false);
   const walletConnectConnector = walletConnect;
   const handleClose = () => setIsModalVisible(false);
@@ -28,7 +29,6 @@ export default function Connect() {
   };
 
   let WETH = null;
-  const web3 = new Web3(Web3.givenProvider)
   const WETHContract = async () => {
     if(WETH)
       return WETH
@@ -49,8 +49,11 @@ export default function Connect() {
   }
 
   useEffect(()=>{
-    fetchBalance()
-  }, [active])
+    if(isWalletConnectReady && active) {
+      console.log('isActive111')
+      fetchBalance()
+    }
+  }, [active, isWalletConnectReady])
   // for the dropdown menu
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -69,8 +72,12 @@ export default function Connect() {
     if (type === 'metamask') {
       activateInjectedProvider('MetaMask')
       await activate(injected);
+      await refreshMetamaskProvider()
     } else {
       await activate(walletConnectConnector);
+      await refreshWalletConnectProvider()
+      console.log('isActive222')
+      setWalletConnectReady(true)
     }
     handleBodyScroll();
     handleClose();

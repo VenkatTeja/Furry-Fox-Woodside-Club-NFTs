@@ -54,7 +54,7 @@ export default function Home() {
         {/* <p>Active: {active}, chain ID: {chainId}</p> */}
         {/* <Alert severity="warning" key="error2">Please connect to {process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_NAME} to mint NFTs</Alert> */}
         {!active && <p></p>}
-        {!active && <Alert severity="error">Please connect wallet to mint NFTs {chainId} {active}</Alert>}
+        {!active && <Alert severity="error">Please connect wallet to mint NFTs. Ensure your wallet supports Polygon.</Alert>}
         {active && chainId != process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID && <Alert severity="error">Please connect to {process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_NAME} network to mint NFTs</Alert>}
         {/* <GetStarted /> */}
         {active && chainId==process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID && (<MintNFT />)}

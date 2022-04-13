@@ -1,5 +1,5 @@
 import { Button, Card, CardActions, CardContent, Container, Item, Grid, Paper, Input, Typography, Alert } from '@mui/material';
-import { sampleNFT } from '@pages/utils/_web3';
+import { sampleNFT, web3 } from '@pages/utils/_web3';
 import { useWeb3React } from '@web3-react/core';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -16,7 +16,6 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [shouldApprove, setShouldApprove] = useState(true);
-    const web3 = new Web3(Web3.givenProvider)
     let WETH = null;
     
     const WETHContract = async () => {

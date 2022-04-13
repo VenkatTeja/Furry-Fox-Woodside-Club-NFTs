@@ -11,6 +11,7 @@ Upload them somewhere (need not be ipfs) such that,
 {{baseurl}}/{{tokenid}} should result in metajson
 
 Once we reveal NFTs, we shall update the base urls of both factory and nft contracts
+Also, update NUM_OPTIONS in Factory
 
 ## Verify contract on etherscan
 `npx hardhat verify --network mainnet DEPLOYED_CONTRACT_ADDRESS "Constructor argument 1"`

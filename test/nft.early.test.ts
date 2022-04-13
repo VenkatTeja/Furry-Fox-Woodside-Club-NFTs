@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { FFWClubNFT } from "../typechain";
+import { FFWClubFactory, FFWClubNFT } from "../typechain";
 import * as lib from './lib'
 const keccak256 = require('keccak256')
 const { MerkleTree } = require('merkletreejs')
@@ -12,7 +12,7 @@ function iThrowError() {
 
 describe("NFT", function () {
   describe("NFT Team minting test", async function () {
-      let root: any, merkleTree: any, nft: FFWClubNFT;
+      let root: any, merkleTree: any, nft: FFWClubNFT, factory: FFWClubFactory;
       let price = ethers.utils.parseEther('0.001').toString()
       let wallets: any[];
       let owner: SignerWithAddress, addr1: SignerWithAddress, addr2: SignerWithAddress;
@@ -21,7 +21,7 @@ describe("NFT", function () {
         [owner, addr1, addr2, addr3, addr4] = await ethers.getSigners()
         const signers = await ethers.getSigners()
         console.log({owner: owner.address})
-        let wyvernProxy = '0xf57b2c51ded3a29e6891aba85459d600256cf317'
+        let wyvernProxy = '0x58807baD0B376efc12F5AD86aAc70E78ed67deaE'
         const NFT = await ethers.getContractFactory("FFWClubNFT")
         nft = await NFT.deploy(wyvernProxy, 10, process.env.WETH || "")
 
@@ -51,8 +51,18 @@ describe("NFT", function () {
                 console.log({newBal: ethers.utils.formatEther(newBal.toString())})
             }
         }
+
+        let Factory = await ethers.getContractFactory('FFWClubFactory')
+        factory = await Factory.deploy(wyvernProxy, nft.address)
+        await factory.deployed()
+        console.log('Factory deployed', factory.address)
       })
 
+      it('mint factory', async () => {
+        let tx = await factory.mint(0, owner.address)
+        await tx.wait()
+      })
+      return;
       it('transfer balance2', async () => {
         let balance = await lib.getTokenBalance(owner, lib.TOKENS.WETH_MATIC.addr, nft.address)
         let balanceOwner = await lib.getTokenBalance(owner, lib.TOKENS.WETH_MATIC.addr, owner.address)

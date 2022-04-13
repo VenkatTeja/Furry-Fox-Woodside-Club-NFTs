@@ -1,7 +1,7 @@
 import { Grid, Stack, Typography  } from '@mui/material';
 import { useWeb3React } from '@web3-react/core';
 import { useEffect, useState } from 'react';
-import { mintGift, mintWithProof, mintPublic, mintWhitelist, sampleNFT } from '@pages/utils/_web3';
+import { mintGift, mintWithProof, mintPublic, mintWhitelist, sampleNFT, web3 } from '@pages/utils/_web3';
 import MintNFTCard from './mint-nft-card';
 import MerkleMintComponent from './merkle-mint-component'
 import useSWR from 'swr';
@@ -12,7 +12,6 @@ const ALREADY_CLAIMED = 1;
 const CLAIMABLE = 2;
 
 const MintNFT = () => {
-  const web3 = new Web3(Web3.givenProvider)
 
   const fetcher = (url) => fetch(url).then((res) => res.json());
   const { active, account, chainId } = useWeb3React();

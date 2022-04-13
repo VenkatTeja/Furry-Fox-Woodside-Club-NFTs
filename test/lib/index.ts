@@ -113,5 +113,9 @@ export const TOKENS = {
     WETH_MATIC: {
         addr: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
         decimals: 18
+    },
+    WETH_MATIC_TESTNET: {
+        addr: '0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa',
+        decimals: 18
     }
 }

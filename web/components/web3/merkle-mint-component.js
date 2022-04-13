@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import styles from '../../styles/Home.module.css';
 import MintNFTCard from './mint-nft-card';
-import { mintWithProof, sampleNFT, parseWeb3Error, mintPublic } from '@pages/utils/_web3';
+import { mintWithProof, sampleNFT, parseWeb3Error, mintPublic, web3 } from '@pages/utils/_web3';
 
 import { useWeb3React } from '@web3-react/core';
 import Web3 from 'web3';
@@ -13,7 +13,6 @@ import Web3 from 'web3';
 
 const MerkleMintComponent = ({title, description, mintMethod, counterMethod, maxLimitMethod, api,
     mintPrice, imageUrl}) => {
-    const web3 = new Web3(Web3.givenProvider)
     const fetcher = (url) => {
         setLoading(true); 
         return fetch(url).then((res) => {
