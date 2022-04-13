@@ -6,7 +6,7 @@ import GetStarted from '@components/GetStarted';
 import MintNFT from '@components/web3/mint-nft';
 import { useWeb3React } from '@web3-react/core';
 import { useEffect, useState } from 'react';
-
+import { providerReady } from '@pages/utils/_web3';
 export default function Home() {
   const { activate, deactivate, chainId, active, account, library } = useWeb3React();
 

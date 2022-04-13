@@ -36,23 +36,23 @@ const Header = () => {
   
   const [, forceUpdate] = useReducer(x => x + 1, 0);
 
-  useEffect(()=>{
-    setReady(false)
-      if(account) {
-        let containsYourNFTsLink = false;
-        navLinks.forEach(item => {
-          if(item.title == 'Your NFTs')
-            containsYourNFTsLink = true
-        })
-        if(!containsYourNFTsLink)
-          navLinks.push(
-            { title: 'Your NFTs', path: `https://${openseaLink}/${account}?search[chains][0]=MUMBAI`,
-            target: '_blank'},
-          )
-        forceUpdate()
-      }
-      setReady(true)
-    }, [account])
+  // useEffect(()=>{
+  //   setReady(false)
+  //     if(account) {
+  //       let containsYourNFTsLink = false;
+  //       navLinks.forEach(item => {
+  //         if(item.title == 'Your NFTs')
+  //           containsYourNFTsLink = true
+  //       })
+  //       if(!containsYourNFTsLink)
+  //         navLinks.push(
+  //           { title: 'Your NFTs', path: `https://${openseaLink}/${account}?search[chains][0]=MUMBAI`,
+  //           target: '_blank'},
+  //         )
+  //       forceUpdate()
+  //     }
+  //     setReady(true)
+  //   }, [account])
 
   return (
     <>

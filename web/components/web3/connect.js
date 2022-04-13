@@ -5,11 +5,11 @@ import { styled as muiStyled, alpha } from '@mui/material/styles';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { useWeb3React } from '@web3-react/core';
-import { abridgeAddress, injected, useENSName, walletConnect, activateInjectedProvider } from '@pages/utils/_web3';
+import { abridgeAddress, injected, useENSName, walletConnect, activateInjectedProvider, fetchBalance } from '@pages/utils/_web3';
 import ConnectModal from "@components/web3/connectModal";
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { Box, Chip } from "@mui/material";
-import { sampleNFT, refreshMetamaskProvider, refreshWalletConnectProvider, web3 } from '@pages/utils/_web3';
+import { sampleNFT, providerReady, refreshMetamaskProvider, refreshWalletConnectProvider, web3 } from '@pages/utils/_web3';
 import Web3 from 'web3';
 import { InjectedConnector } from "@web3-react/injected-connector";
 
@@ -21,37 +21,27 @@ export default function Connect() {
   const [balance, setBalance] = useState('0 wETH')
   const [isWalletConnectReady, setWalletConnectReady] = useState(false)
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const walletConnectConnector = walletConnect;
+  
   const handleClose = () => setIsModalVisible(false);
   const handleConnect = () => {
     setIsModalVisible(true);
     handleMenuClose();
   };
 
-  let WETH = null;
-  const WETHContract = async () => {
-    if(WETH)
-      return WETH
-    let tokenAddress = await sampleNFT.methods.WETH().call()
-    console.log('tokenaddress', tokenAddress)
-    const ERC20ABI = require("/data/ERC20.json");
-    WETH = new web3.eth.Contract(ERC20ABI.abi, tokenAddress);
-    return WETH
-  }
+  
 
-  const fetchBalance = async () => {
+  const _fetchBalance = async () => {
     if(account && chainId==process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID) {
-      await WETHContract()
-      let balance = await WETH.methods.balanceOf(account).call()
-      let balEther = web3.utils.fromWei(balance)
-      setBalance(`${parseFloat(balEther).toFixed(4)} wETH`)
+      let balEther = await fetchBalance(account)
+      let decimals = process.env.NEXT_PUBLIC_ENVIRONMENT == 'development' ? 8 : 4
+      setBalance(`${parseFloat(balEther).toFixed(decimals)} wETH`)
     }
   }
 
   useEffect(()=>{
     if(isWalletConnectReady && active) {
       console.log('isActive111')
-      fetchBalance()
+      _fetchBalance()
     }
   }, [active, isWalletConnectReady])
   // for the dropdown menu
@@ -68,19 +58,21 @@ export default function Connect() {
     document.body.style.overflow = 'visible';
   }
 
-  const handleLoginClick = async (type) => {
+  const handleLoginClick = async (type, reload=true) => {
     if (type === 'metamask') {
       activateInjectedProvider('MetaMask')
       await activate(injected);
       await refreshMetamaskProvider()
     } else {
-      await activate(walletConnectConnector);
+      await activate(walletConnect);
       await refreshWalletConnectProvider()
       console.log('isActive222')
-      setWalletConnectReady(true)
+      
     }
+    localStorage.setItem("walletType", type);
     handleBodyScroll();
     handleClose();
+    setWalletConnectReady(true)
   }
 
   const goToWallet = async () => {
@@ -88,6 +80,7 @@ export default function Connect() {
   }
 
   const handleDisconnect = async () => {
+    localStorage.removeItem('walletType')
     await deactivate();
   }
 

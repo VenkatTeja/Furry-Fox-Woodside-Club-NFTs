@@ -11,9 +11,14 @@ const INFURA_ID =  process.env.NEXT_PUBLIC_INFURA_ID;
 const NFT_ADDRESS = process.env.NEXT_PUBLIC_NFT_ADDRESS;
 const ENVIRONMENT = process.env.NEXT_PUBLIC_ENVIRONMENT;
 const SUPPORTED_CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID)
-export let web3 = new Web3(Web3.givenProvider)
+let host = process.env.NEXT_PUBLIC_HOST
+// host = 'http://localhost:3000'
+let providerRPC = `${host}/rpc`
+console.log('givenProvider', Web3.givenProvider)
+export let web3 = new Web3(new Web3.providers.HttpProvider(providerRPC))
 const contractABI = require("/data/SampleNFT.json");
 
+export let providerReady = false
 const acceptedChains = [SUPPORTED_CHAIN_ID]
 
 export let sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
@@ -21,24 +26,50 @@ export const explorer = ENVIRONMENT === 'development' ? 'https://mumbai.polygons
 
 export const injected = new InjectedConnector({});
 let rpcObj = {}
-rpcObj[SUPPORTED_CHAIN_ID] = `${process.env.NEXT_PUBLIC_HOST}/rpc`
+rpcObj[SUPPORTED_CHAIN_ID] = providerRPC
+console.log('host', providerRPC)
 export const walletConnect = new WalletConnectConnector({
   // infuraId: INFURA_ID,
   rpc: rpcObj,
   bridge: 'https://bridge.walletconnect.org',
   qrcode: true,
+  chainId: SUPPORTED_CHAIN_ID,
   pollingInterval: 10000
   // supportedChainIds: acceptedChains,
 });
 
 export let refreshWalletConnectProvider = async () => {
-  web3 = new Web3(await walletConnect.getProvider())
+  let provider = await walletConnect.getProvider()
+  // provider.rpcUrl = providerRPC
+  console.log('provider', provider)
+  web3 = new Web3(provider)
   sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
+  providerReady = true
 }
 
 export let refreshMetamaskProvider = async () => {
   web3 = new Web3(Web3.givenProvider)
   sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
+  providerReady = true
+}
+
+let WETH = null;
+const WETHContract = async () => {
+  console.log('WETHContract', web3)
+  if(WETH)
+    return WETH
+  let tokenAddress = await sampleNFT.methods.WETH().call()
+  console.log('tokenaddress', tokenAddress)
+  const ERC20ABI = require("/data/ERC20.json");
+  WETH = new web3.eth.Contract(ERC20ABI.abi, tokenAddress);
+  return WETH
+}
+
+export const fetchBalance = async (account) => {
+  await WETHContract()
+  let balance = await WETH.methods.balanceOf(account).call()
+  let balEther = web3.utils.fromWei(balance)
+  return balEther;
 }
 
 export function activateInjectedProvider(providerName) {
