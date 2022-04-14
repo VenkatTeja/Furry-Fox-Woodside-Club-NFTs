@@ -77,7 +77,7 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
                 if(isValid == null) {
                     setError('Connecting...')
                 } else {
-                    showError('This wallet is not whitelisted for this NFT')
+                    showError('This wallet is not whitelisted')
                 }
             } else
                 showError('Not connected')
