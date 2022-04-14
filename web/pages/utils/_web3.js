@@ -4,6 +4,7 @@ import { WalletConnectConnector } from '@web3-react/walletconnect-connector';
 import { WalletLinkConnector } from '@web3-react/walletlink-connector';
 import { useEffect, useState } from "react";
 import Web3 from 'web3';
+var mixpanel = require('mixpanel-browser');
 
 console.log('loaded web3')
 /** Do not destructure env variables */
@@ -12,7 +13,7 @@ const NFT_ADDRESS = process.env.NEXT_PUBLIC_NFT_ADDRESS;
 const ENVIRONMENT = process.env.NEXT_PUBLIC_ENVIRONMENT;
 const SUPPORTED_CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID)
 let host = process.env.NEXT_PUBLIC_HOST
-// host = 'http://localhost:3000'
+host = 'http://localhost:3000'
 let providerRPC = `${host}/rpc`
 console.log('givenProvider', Web3.givenProvider)
 export let web3 = new Web3(new Web3.providers.HttpProvider(providerRPC))
@@ -242,6 +243,12 @@ export const useENSName = (library, address) => {
   }, [library, address]);
 
   return ENSName;
+}
+
+mixpanel.init("581b979affe3b2c9b88a2dfccc5f14a6");
+
+export const track = (name, props = {}) => {
+  mixpanel.track(name, props);
 }
 
 export default function blank() { return <></>}

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import styles from '../../styles/Home.module.css';
 import MintNFTCard from './mint-nft-card';
-import { mintWithProof, sampleNFT, parseWeb3Error, mintPublic, web3 } from '@pages/utils/_web3';
+import { track, mintWithProof, sampleNFT, parseWeb3Error, mintPublic, web3 } from '@pages/utils/_web3';
 
 import { useWeb3React } from '@web3-react/core';
 import Web3 from 'web3';
@@ -34,7 +34,7 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
     const isPublicMint = api=="publicAccess"
     // team 
     let mintProof = [];
-    let isValid = false;
+    let isValid = null;
     console.log({account, active})
     const res = useSWR(active && account ? `/api/commonWhitelistProof?address=${account}&whitelistName=${api}` : null, {
         fetcher, revalidateIfStale: false, revalidateOnFocus: false, revalidateOnReconnect: false });
@@ -55,31 +55,48 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
         return {mints: result, max: max}
     }
 
+    const showError = (msg) => {
+        track('Error', {msg, account})
+        setError(msg)
+    }
+
+    const _setClaimable = (isClaimable) => {
+        track('set claimable', {isClaimable, account})
+        setClaimable(isClaimable)
+    }
+
     useEffect(async () => {
         setLoading(true);
         setError('')
         console.log(`${title} checking`)
         if (!active || !isValid) {
-            console.log(`${title} mint not allowed`, !active, !isValid)
-            setClaimable(false);
+            console.log(`${title} mint not allowed`, active, isValid)
+            _setClaimable(false);
             setLoading(false);
-            setError('This wallet is not whitelisted for this NFT')
+            if(active) {
+                if(isValid == null) {
+                    setError('Connecting...')
+                } else {
+                    showError('This wallet is not whitelisted for this NFT')
+                }
+            } else
+                showError('Not connected')
             return;
         } else {
             try {
                 console.log({methods: sampleNFT.methods[counterMethod], counterMethod, maxLimitMethod, account})
                 let {mints, max} = await getMintStats()
                 let claimable = parseInt(mints) < parseInt(max)
-                setClaimable(claimable);
+                _setClaimable(claimable);
                 if(!claimable) {
                     setLoading(false);
-                    setError('Max eligible mints for this wallet are done')
+                    showError('Max eligible mints for this wallet are done')
                     return;
                 }
             } catch(err) {
                 console.error(`fetch ${counterMethod} failed`, err)
-                setClaimable(false)
-                setError('Something went wrong while checking eligibility')
+                _setClaimable(false)
+                showError('Something went wrong while checking eligibility')
                 setLoading(false);
                 return;
             }
@@ -87,45 +104,45 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
         async function validateClaim() {
             sampleNFT.methods[mintMethod](mintProof, numToMint).call({ from: account }).then(() => {
                 setLoading(false);
-                setClaimable(true);
+                _setClaimable(true);
             }).catch((err) => {
                 setLoading(false);
                 console.warn('validateClaim err', err)
-                setClaimable(false)
+                _setClaimable(false)
                 let errorJson = parseWeb3Error(err)
                 if(errorJson && errorJson.message) {
                     let allowanceMsg = 'transfer amount exceeds allowance'
                     let err = errorJson.message.replace('execution reverted: ', '')
                     console.log(err)
                     if(err.includes(allowanceMsg)) {
-                        setClaimable(true)
+                        _setClaimable(true)
                     } else {
-                        setError(err)
+                        showError(err)
                     }
                 } else
-                    setError('Validation failed')
+                    showError('Validation failed')
             });
         }
         async function validatePublicMint() {
             sampleNFT.methods.mintTo(account, numToMint).call({ from: account }).then(() => {
                 setLoading(false);
-                setClaimable(true);
+                _setClaimable(true);
             }).catch((err) => {
                 setLoading(false);
                 console.warn('validateClaim err', err)
-                setClaimable(false)
+                _setClaimable(false)
                 let errorJson = parseWeb3Error(err)
                 if(errorJson && errorJson.message) {
                     let allowanceMsg = 'transfer amount exceeds allowance'
                     let err = errorJson.message.replace('execution reverted: ', '')
                     console.log(err)
                     if(err.includes(allowanceMsg)) {
-                        setClaimable(true)
+                        _setClaimable(true)
                     } else {
-                        setError(err)
+                        showError(err)
                     }
                 } else
-                    setError('Validation failed')
+                    showError('Validation failed')
             });   
         }
         !isPublicMint ? validateClaim() : validatePublicMint();
@@ -134,10 +151,12 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
 
     const onMintWhitelist = async () => {
         setLoading(true)
+        track('Clicked Mint', {account})
         setMintInfo({status: null, success: null, url: null})
         const { success, status, url } = await mintWithProof(account, mintProof, mintMethod, numToMint);
         console.log({ success, status, url });
         setMintStatus(success);
+        track('Mint result', {account, success, status, url})
         setMintInfo({status, success, url})
         setLoading(false)
         if(success)
@@ -146,10 +165,12 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
 
     const onMintPublic = async () => {
         setLoading(true)
+        track('Clicked Public Mint', {account})
         setMintInfo({status: null, success: null, url: null})
         const { success, status, url } = await mintPublic(account, numToMint);
         console.log({ success, status, url });
         setMintStatus(success);
+        track('Public Mint result', {account, success, status, url})
         setMintInfo({status, success, url})
         setLoading(false)
         if(success)

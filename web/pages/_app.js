@@ -28,6 +28,18 @@ export default function MyApp(props) {
       <Head>
         <title>NFT with Merkle Whitelist Web3 Scaffold</title>
         <meta name  ="viewport" content="initial-scale=1, width=device-width" />
+        {/* <!-- Global site tag (gtag.js) - Google Analytics --> */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-KYMQ20WGB4"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-KYMQ20WGB4', { page_path: window.location.pathname });
+            `,
+          }}
+        />
       </Head>
       <ThemeProvider theme={theme}>
         <Web3ReactProvider getLibrary={getLibrary}>

@@ -62,7 +62,7 @@ describe("NFT", function () {
         let tx = await factory.mint(0, owner.address)
         await tx.wait()
       })
-      return;
+
       it('transfer balance2', async () => {
         let balance = await lib.getTokenBalance(owner, lib.TOKENS.WETH_MATIC.addr, nft.address)
         let balanceOwner = await lib.getTokenBalance(owner, lib.TOKENS.WETH_MATIC.addr, owner.address)

@@ -20,7 +20,7 @@ describe("NFT", function () {
             console.log({owner: owner.address})
             let wyvernProxy = '0xf57b2c51ded3a29e6891aba85459d600256cf317'
             const NFT = await ethers.getContractFactory("FFWClubNFT")
-            nft = await NFT.deploy(wyvernProxy, 10,
+            nft = await NFT.deploy(wyvernProxy, 1000,
                 process.env.WETH || "")
 
             await nft.deployed();
@@ -28,7 +28,12 @@ describe("NFT", function () {
             console.log('Deployed NFT.sol', nft.address)
 
         })
-    
+
+        it('self mint', async () => {
+            let gas = await nft.estimateGas.selfMint(owner.address, 1)
+            console.log(gas)
+        })
+        return;
         it('set phase and mint price', async () => {
             let price = ethers.utils.parseEther('0.001').toString()
             let tx = await nft.setPhaseAndMintPrice(1, price)

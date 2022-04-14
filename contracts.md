@@ -17,3 +17,6 @@ Also, update NUM_OPTIONS in Factory
 `npx hardhat verify --network mainnet DEPLOYED_CONTRACT_ADDRESS "Constructor argument 1"`
 Example:
 `npx hardhat verify --network rinkeby 0xb0A7b60C696688583B6d76f767cBcc767771ca4d "0xf57b2c51ded3a29e6891aba85459d600256cf317" "100"`
+
+// Mumbai
+`npx hardhat verify --network mumbai 0xd8a706694e2da412ed1B2D6d0373f34522B47E88 "0xc758add3df393ebbf09d1631b49f66e285dbf974" "100" "0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa"`

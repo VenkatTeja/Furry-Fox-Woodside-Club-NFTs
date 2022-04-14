@@ -1,5 +1,5 @@
 import { Button, Card, CardActions, CardContent, Container, Item, Grid, Paper, Input, Typography, Alert } from '@mui/material';
-import { sampleNFT, web3 } from '@pages/utils/_web3';
+import { sampleNFT, web3, track } from '@pages/utils/_web3';
 import { useWeb3React } from '@web3-react/core';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -36,6 +36,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
     const approveToken = async () => {
       try {
         setWaiting(true)
+        track('Approving token', {account})
         await WETHContract()
         let allowance = web3.utils.toWei('10')
         let requiredAllowance = getRequiredAllowance()
@@ -55,6 +56,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
             }, 5000)
             setWaiting(false)
             checkTokenAllowance()
+            track('Approved token', {account})
           }
         })
         .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
@@ -64,9 +66,11 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
             setError('')
           }, 5000)
           setWaiting(false)
+          track('Approve token error', {account, error, receipt})
         });
       } catch (err) {
         console.error('approveToken err', err)
+        track('Approve token catch error', {account, err})
         setWaiting(false)
       }
     }
@@ -78,6 +82,11 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         return requiredAllowance
     }
 
+    const showError = (msg) => {
+      track('Error [Card]', {msg, account})
+      setError(msg)
+    }
+
     const checkTokenAllowance = async () => {
       try {
         setChecking(true)
@@ -86,22 +95,25 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         if(!numToMint || numToMint < 1) {
           setDisabled(true)
           setChecking(false)
-          return setError('Quantity must be at least 1')
+          return showError('Quantity must be at least 1')
         }
         if(!Number.isInteger(numToMint)) {
           setDisabled(true)
           setChecking(false)
-          return setError('Quantity must a integer')
+          return showError('Quantity must a integer')
         }
         // Check if token is already allowed
         await WETHContract()
         let allowance = await WETH.methods.allowance(account, process.env.NEXT_PUBLIC_NFT_ADDRESS).call()
         console.log('allowance', {allowance, mintPrice, numToMint, bn: web3.utils.toWei(mintPrice+'')})
         let requiredAllowance = getRequiredAllowance()
-        if(requiredAllowance.lte(web3.utils.toBN(allowance)))
+        if(requiredAllowance.lte(web3.utils.toBN(allowance))) {
           setShouldApprove(false)
-        else
+          track('Has token allowance', {account, has: true})
+        } else {
           setShouldApprove(true)
+          track('Has token allowance', {account, has: false})
+        }
         setChecking(false)
         setDisabled(false)
         // let inWei = ethers.utils.parseUnits(this.betAmount.toString(), this.globalService.TokenDecimals)
@@ -116,6 +128,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         // this.loader.loaderEnd()
       } catch (err) {
         console.error(err)
+        track('token allowance err', {account, err})
         setError('Something went wrong while checking wETH allowance')
         setChecking(false)
         setDisabled(true)

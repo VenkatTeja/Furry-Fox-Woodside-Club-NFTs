@@ -9,15 +9,9 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "hardhat/console.sol";
 
-// Furry Fox Woodside club
-//     /\_/\
-//    | - - |
-//    \ --- /
-//     \___/
-
-/// @title Furry Fox Woodside club NFTs
-/// @author FFWClub team
-/// @custom:developer @VenkatTeja
+/// @title Furry Fox Woodside club NFTs 🦊
+/// @custom:website furryfoxwoodside.club
+/// @custom:developer github.com/VenkatTeja
 contract FFWClubNFT is ERC721Tradable {
     using Strings for uint256;
 
@@ -72,8 +66,8 @@ contract FFWClubNFT is ERC721Tradable {
     bool public settingsIsFrozen = false;
 
     bool merkleMintVerficationEnabled = true;
-    bool paused = false;
-    bool revealed = false;
+    bool public paused = false;
+    bool public revealed = false;
 
     constructor(address _proxyRegistryAddress, uint64 maxSupply, address _WETH)
         ERC721Tradable("Furry Fox Woodside Club", "FFWClub", _proxyRegistryAddress)
@@ -375,6 +369,12 @@ contract FFWClubNFT is ERC721Tradable {
         publicsaleCounter[_msgSender()] += count;
         transferTokens(_msgSender(), mintPrice * count);
         _mint(_to, count);
+    }
+
+    // /// Mint NFTs into this contract so that 
+    // /// they can be revealed and sale can be opened on opensea
+    function selfMint(address to, uint64 count) public onlyOwner {
+        _mint(to, count);
     }
 
     /// Public Mint accessible to anyone once public sale phase is enabled

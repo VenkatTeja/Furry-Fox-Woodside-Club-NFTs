@@ -25,10 +25,12 @@ async function main() {
   if(!process.env.WYVERN_PROXY)
         throw new Error('WYVERN_PROXY is needed')
   const wyvernProxy = process.env.WYVERN_PROXY
+  
+  console.log('deploying contract')
   // const nft = await ethers.getContractAt("FFWClubNFT", '0xb0A7b60C696688583B6d76f767cBcc767771ca4d');
   const NFT = await ethers.getContractFactory('FFWClubNFT')
   const nft = await NFT.deploy(wyvernProxy, 100,
-    process.env.WETH || "");
+    process.env.WETH);
 
   await nft.deployed();
 
@@ -41,7 +43,7 @@ async function main() {
 
   // await (await (factory.setBaseURI('ipfs://bafybeibeb2t5dmq2nggyuclyeh5yv7trc46q2mu5pxblxrgy2dfdmny7rq/out/'))).wait()
   // console.log('factory base url set')
-  await (await nft.setBaseURI('ipfs://bafkreif6wlyjldytjws54zkqldxhdxafvmhtckybgvn2o3u5zi2bjevizq')).wait()
+  await (await nft.setBaseURI('ipfs://bafkreibxbghosxswjbixjaszfydtadkwjx46ho5h2iabpjjram5us5dhs4')).wait()
   console.log('base uri set')
   await (await nft.setLimits(5, 5, 5, 5, 5, 10, 10, 10, 10, 20)).wait()
   console.log('limits set')

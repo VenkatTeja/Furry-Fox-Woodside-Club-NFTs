@@ -34,15 +34,18 @@ async function main() {
     const factory = await ethers.getContractAt('FFWClubFactory', process.env.FACTORY || "")
     console.log("Factory deployed to:", factory.address);
 
-    await (await (nft.setPhaseAndMintPrice(4, await nft.mintPrice())))
-    console.log('mint price set')
+    await (await (factory.setBaseURI('ipfs://bafybeibeb2t5dmq2nggyuclyeh5yv7trc46q2mu5pxblxrgy2dfdmny7rq/out/'))).wait()
+    console.log('factory base url set')
 
-    let myBal = await myLib.getTokenBalance(user, process.env.WETH, user.address)
-    console.log('myBal', myBal)
+    // await (await (nft.setPhaseAndMintPrice(4, await nft.mintPrice())))
+    // console.log('mint price set')
 
-    let price = ethers.utils.parseEther('5').toString()
-    await myLib.approveToken(process.env.WETH, nft.address, price, user)
-    await (await (factory.mint(0, user.address))).wait()
+    // let myBal = await myLib.getTokenBalance(user, process.env.WETH, user.address)
+    // console.log('myBal', myBal)
+
+    // let price = ethers.utils.parseEther('5').toString()
+    // await myLib.approveToken(process.env.WETH, nft.address, price, user)
+    // await (await (factory.mint(0, user.address))).wait()
 }
 
 // We recommend this pattern to be able to use async/await everywhere

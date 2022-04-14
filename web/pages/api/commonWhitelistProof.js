@@ -40,6 +40,14 @@ const handler = async (req, res) => {
     res.status(400).json({});
     return;
   }
+
+  if(process.env.NEXT_PUBLIC_ALLOW_ANYONE=='true') {
+    return res.status(200).json({
+      proof: [],
+      valid: true
+    })
+  }
+  
   console.log('api', req.query)
   if(req.query.whitelistName == 'publicAccess') {
     console.log('public access mint')
@@ -52,18 +60,29 @@ const handler = async (req, res) => {
   
   const address = req.query.address;
   if (!address) {
-    
-    res.status(400).json({ msg: "address is required"});
+    res.status(200).json({
+      proof: [],
+      valid: false,
+      msg: "address is required"
+    });
     return;
   }
   const whitelistName = req.query.whitelistName;
   if(!map[whitelistName]) {
-    res.status(400).json({ msg: "whitelistName is required"});
+    res.status(200).json({
+      proof: [],
+      valid: false,
+      msg: "whitelistName is required"
+    });
     return;
   }
   let {addresses, merkleTree} = map[whitelistName]
   if(!addresses.includes(address)) {
-    res.status(400).json({ msg: "address not in whitelist"});
+    res.status(200).json({
+      proof: [],
+      valid: false,
+      msg: "address not in whitelist"
+    });
     return;
   }
   

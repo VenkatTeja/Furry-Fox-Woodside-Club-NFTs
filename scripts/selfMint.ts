@@ -13,17 +13,12 @@ async function main() {
 
     console.log("NFT deployed to:", nft.address);
 
-    // let tx = await nft.revealNFTs();
-    // await tx.wait()
-    let tx = await nft.setBaseURI("ipfs://bafkreicgmmr5qjg3svsdx23eflqthr26uamkb4qduag75uq32ilzzbayjm/")
+    let tx = await nft.selfMint(user.address, 10)
     await tx.wait()
-    console.log('NFTs revealed')
+    console.log('self mint done')
 }
 
 main().catch((error) => {
     console.error(error);
     process.exitCode = 1;
 });
-
-
-// ipfs://bafybeibeb2t5dmq2nggyuclyeh5yv7trc46q2mu5pxblxrgy2dfdmny7rq/out/
