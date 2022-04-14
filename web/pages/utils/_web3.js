@@ -13,7 +13,6 @@ const NFT_ADDRESS = process.env.NEXT_PUBLIC_NFT_ADDRESS;
 const ENVIRONMENT = process.env.NEXT_PUBLIC_ENVIRONMENT;
 const SUPPORTED_CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_ACCEPTED_CHAIN_ID)
 let host = process.env.NEXT_PUBLIC_HOST
-host = 'http://localhost:3000'
 let providerRPC = `${host}/rpc`
 console.log('givenProvider', Web3.givenProvider)
 export let web3 = new Web3(new Web3.providers.HttpProvider(providerRPC))
