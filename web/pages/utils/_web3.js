@@ -34,8 +34,8 @@ export const walletConnect = new WalletConnectConnector({
   bridge: 'https://bridge.walletconnect.org',
   qrcode: true,
   chainId: SUPPORTED_CHAIN_ID,
-  pollingInterval: 10000
-  // supportedChainIds: acceptedChains,
+  pollingInterval: 10000,
+  supportedChainIds: acceptedChains,
 });
 
 export let refreshWalletConnectProvider = async () => {

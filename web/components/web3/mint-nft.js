@@ -92,7 +92,7 @@ const MintNFT = () => {
   return (
     <>
       <Stack id="demo" sx={{bgColor: 'secondary.main', width: '100%'}}>
-        <Typography variant="h4" color='primary.main' sx={{textAlign: 'center', paddingTop: 5, paddingBottom: 5, fontFamily: 'IntegralCF'}}>Mint an NFT</Typography>
+        <Typography variant="h4" color='primary.main' sx={{textAlign: 'center', paddingTop: 5, paddingBottom: 5, fontFamily: 'IntegralCF'}}>Mint Furry Fox</Typography>
         {phase==0 && <Typography variant="body1" color='primary.main' sx={{textAlign: 'center', paddingTop: 5, paddingBottom: 5, fontFamily: 'IntegralCF'}}>Sale is not open yet</Typography>}
         <Grid container spacing={3} justifyContent="center" alignItems="center">
         {phase==1 && <MerkleMintComponent
