@@ -13,6 +13,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
     const [checking, setChecking] = useState(true);
     const [disabled, setDisabled] = useState(false);
     const [waiting, setWaiting] = useState(false)
+    const [waitingMsg, setWaitingMsg] = useState("")
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
     const [shouldApprove, setShouldApprove] = useState(true);
@@ -35,6 +36,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
 
     const approveToken = async () => {
       try {
+        setWaitingMsg(`0/10`)
         setWaiting(true)
         track('Approving token', {account})
         await WETHContract()
@@ -51,6 +53,9 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         })
         .on('confirmation', (confirmationNumber, receipt) => {
           console.log('confirmation number', confirmationNumber)
+          if(confirmationNumber <= 10) {
+            setWaitingMsg(`${confirmationNumber}/10`)
+          }
           if(confirmationNumber == 10 && receipt.status) {
             console.log('tx confirmation', confirmationNumber, receipt)
             setMessage('Token approved')
@@ -216,7 +221,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
       
     </Paper>
     {error && <Alert variant='filled' severity="warning" onClose={() => {setError('')}}>{error}</Alert>}
-    {waiting && <Alert variant='filled' severity="info">Waiting for transaction to complete</Alert>}
+    {waiting && <Alert variant='filled' severity="info">Waiting for transaction to complete (Required confirmations: {waitingMsg})</Alert>}
     {message && <Alert variant='filled' severity="success" onClose={() => {setMessage('')}}>{message}</Alert>}
     </>
   );
