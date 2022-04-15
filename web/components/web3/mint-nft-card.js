@@ -50,7 +50,8 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
           console.log('transactionHash', hash)
         })
         .on('confirmation', (confirmationNumber, receipt) => {
-          if(confirmationNumber == 15 && receipt.status) {
+          console.log('confirmation number', confirmationNumber)
+          if(confirmationNumber == 10 && receipt.status) {
             console.log('tx confirmation', confirmationNumber, receipt)
             setMessage('Token approved')
             setTimeout(()=>{

@@ -145,6 +145,7 @@ export const mintWithProof = async (account, proof, method, qty) => {
       console.log('transactionHash', hash)
     })
     .on('confirmation', function(confirmationNumber, receipt){
+      console.log('confirmation number', confirmationNumber)
       if(confirmationNumber == 1 && receipt.status) {
         console.log('tx confirmation', confirmationNumber, receipt)
         resolve({
