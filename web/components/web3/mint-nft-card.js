@@ -154,7 +154,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
   return (
     <>
     <Paper sx={{backgroundColor:'#171717', marginBottom: '30px'}}>
-      <Alert severity="info">Non Whitelist limited sale will start at 6 pm EST</Alert>
+      <Alert severity="info">Public sale is open now</Alert>
     </Paper>
     <Paper sx={{padding: '10px', backgroundColor:'#171717', marginBottom: '30px'}}>
       <Alert severity="info" variant='outline'>Important Information</Alert>
