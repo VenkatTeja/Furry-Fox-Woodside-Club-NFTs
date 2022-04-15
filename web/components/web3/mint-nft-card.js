@@ -58,8 +58,8 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
               setMessage('')
             }, 5000)
             setWaiting(false)
-            // setShouldApprove(false)
-            checkTokenAllowance()
+            setShouldApprove(false)
+            // checkTokenAllowance()
             track('Approved token', {account})
           }
         })
