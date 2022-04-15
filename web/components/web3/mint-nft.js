@@ -1,4 +1,4 @@
-import { Grid, Stack, Typography  } from '@mui/material';
+import { Grid, Stack, Typography, Paper, Alert } from '@mui/material';
 import { useWeb3React } from '@web3-react/core';
 import { useEffect, useState } from 'react';
 import { mintGift, mintWithProof, mintPublic, mintWhitelist, sampleNFT, web3 } from '@pages/utils/_web3';
@@ -97,7 +97,7 @@ const MintNFT = () => {
         <Grid container spacing={3} justifyContent="center" alignItems="center">
         {phase==1 && <MerkleMintComponent
             title={'Early Access Mint'}
-            description={'Mint this NFT to the connected wallet. Must be on Early access whitelist.'}
+            description={'Mint this NFT to the connected wallet.'}
             mintMethod="mintEarlyAccessSale"
             counterMethod="earlyCounter"
             maxLimitMethod="MAX_PER_EARLY_ADDRESS"

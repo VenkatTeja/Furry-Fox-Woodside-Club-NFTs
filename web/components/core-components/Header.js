@@ -44,11 +44,13 @@ const Header = () => {
           if(item.title == 'Your NFTs')
             containsYourNFTsLink = true
         })
-        if(!containsYourNFTsLink)
+        if(!containsYourNFTsLink) {
+          let chain = process.env.NEXT_PUBLIC_ENVIRONMENT == 'development' ? 'MUMBAI' : 'MATIC'
           navLinks.push(
-            { title: 'Your NFTs', path: `https://${openseaLink}/${account}?search[chains][0]=MUMBAI`,
+            { title: 'Your NFTs', path: `https://${openseaLink}/${account}?search[chains][0]=${chain}`,
             target: '_blank'},
           )
+        }
         forceUpdate()
       }
       setReady(true)

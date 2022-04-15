@@ -47,6 +47,13 @@ export let refreshWalletConnectProvider = async () => {
   providerReady = true
 }
 
+export let getGasPrice = async () => {
+  let gasPrice = await web3.eth.getGasPrice()
+  let newGasPrice = web3.utils.toBN(gasPrice).add(web3.utils.toBN(web3.utils.toWei('10', 'gwei'))).toString()
+  console.log('gasPrice', gasPrice, newGasPrice)
+  return newGasPrice
+}
+
 export let refreshMetamaskProvider = async () => {
   web3 = new Web3(Web3.givenProvider)
   sampleNFT = new web3.eth.Contract(contractABI.abi, NFT_ADDRESS);
@@ -133,7 +140,7 @@ export const mintWithProof = async (account, proof, method, qty) => {
       })
       return;
     }
-    sampleNFT.methods[method](proof, qty).send({ from: account })
+    sampleNFT.methods[method](proof, qty).send({ from: account, gasPrice: await getGasPrice() })
     .on('transactionHash', function(hash) {
       console.log('transactionHash', hash)
     })
@@ -181,7 +188,7 @@ export const mintPublic = async (account, numberOfTokens) => {
       return;
     }
 
-    sampleNFT.methods.mintTo(account, numberOfTokens).send({ from: account })
+    sampleNFT.methods.mintTo(account, numberOfTokens).send({ from: account, gasPrice: await getGasPrice() })
     .on('transactionHash', function(hash) {
       console.log('transactionHash', hash)
     })

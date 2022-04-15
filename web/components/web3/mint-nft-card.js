@@ -1,5 +1,5 @@
 import { Button, Card, CardActions, CardContent, Container, Item, Grid, Paper, Input, Typography, Alert } from '@mui/material';
-import { sampleNFT, web3, track } from '@pages/utils/_web3';
+import { sampleNFT, web3, track, getGasPrice } from '@pages/utils/_web3';
 import { useWeb3React } from '@web3-react/core';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
@@ -42,24 +42,27 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
         let requiredAllowance = getRequiredAllowance()
         if(requiredAllowance.gte(web3.utils.toBN(allowance)))
           allowance = requiredAllowance.toString()
+        // allowance =  0
         console.log('approving token', allowance)
-        await WETH.methods.approve(process.env.NEXT_PUBLIC_NFT_ADDRESS, allowance).send({ from: account })
-        .on('transactionHash', function(hash) {
+        let gasPrice = await getGasPrice()
+        await WETH.methods.approve(process.env.NEXT_PUBLIC_NFT_ADDRESS, allowance).send({ from: account, gasPrice })
+        .on('transactionHash', (hash) => {
           console.log('transactionHash', hash)
         })
-        .on('confirmation', function(confirmationNumber, receipt){
-          if(confirmationNumber == 1 && receipt.status) {
+        .on('confirmation', (confirmationNumber, receipt) => {
+          if(confirmationNumber == 15 && receipt.status) {
             console.log('tx confirmation', confirmationNumber, receipt)
             setMessage('Token approved')
             setTimeout(()=>{
               setMessage('')
             }, 5000)
             setWaiting(false)
+            // setShouldApprove(false)
             checkTokenAllowance()
             track('Approved token', {account})
           }
         })
-        .on('error', function(error, receipt) { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
+        .on('error', (error, receipt) => { // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
           console.log('tx error', error, error.message, receipt)
           setError('Transaction failed')
           setTimeout(()=>{
@@ -136,11 +139,22 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
     }
 
     useEffect(()=> {
-      checkTokenAllowance()
+      if(!waiting)
+        checkTokenAllowance()
     }, [account, numToMint, mintPrice])
 
   return (
     <>
+    <Paper sx={{padding: '10px', backgroundColor:'#171717', marginBottom: '30px'}}>
+      <Alert severity="info" variant='outline'>Important Information</Alert>
+      <Typography variant="body1" color="#cdcdcd" sx={{padding: '0px 20px', marginBottom: '15px'}}>
+      If you are experiencing any difficulties in minting OR are not comfortable swapping $Matic to wETH. Please transfer 0.04 eth for each NFT to our wallet and we will airdrop NFTs to your wallet. Use this <Button href='https://forms.gle/WgJYr8fxr7efp4cL7' variant="text" sx={{padding: 0, marginLeft: '0px'}} target="_blank">[form]</Button> to pay and register your request.
+      </Typography>
+      <Typography variant="body1" color="#cdcdcd" sx={{padding: '0px 20px', marginBottom: '15px', wordWrap: 'break-word'}}>
+        Our wallet address: 0xf63404268d61C68c387CfDee421E05d439F4F14C
+      </Typography>
+
+    </Paper>
     <Paper
       className=""
       sx={{
