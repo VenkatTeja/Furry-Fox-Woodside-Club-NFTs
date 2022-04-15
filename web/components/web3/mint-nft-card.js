@@ -1,4 +1,6 @@
 import { Button, Card, CardActions, CardContent, Container, Item, Grid, Paper, Input, Typography, Alert } from '@mui/material';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import HelpCenterIcon from '@mui/icons-material/HelpCenter';
 import { sampleNFT, web3, track, getGasPrice } from '@pages/utils/_web3';
 import { useWeb3React } from '@web3-react/core';
 import Image from 'next/image';
@@ -220,9 +222,14 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
       </Grid>
       
     </Paper>
-    {error && <Alert variant='filled' severity="warning" onClose={() => {setError('')}}>{error}</Alert>}
-    {waiting && <Alert variant='filled' severity="info">Waiting for transaction to complete (Required confirmations: {waitingMsg})</Alert>}
-    {message && <Alert variant='filled' severity="success" onClose={() => {setMessage('')}}>{message}</Alert>}
+    <>
+      {error && <Alert variant='filled' severity="warning" onClose={() => {setError('')}}>{error}</Alert>}
+      {waiting && <Alert variant='filled' severity="info">Waiting for transaction to complete (Required confirmations: {waitingMsg})</Alert>}
+      {message && <Alert variant='filled' severity="success" onClose={() => {setMessage('')}}>
+      {message}</Alert>}
+    </>
+
+
     </>
   );
 }

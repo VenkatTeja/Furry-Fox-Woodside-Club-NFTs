@@ -1,6 +1,8 @@
 import { Grid, Stack } from '@mui/material';
-import { Button, Card, CardActions, Alert, CardContent, Input, Typography } from '@mui/material';
+import { Button, Card, Paper, CardActions, Alert, CardContent, Input, Typography } from '@mui/material';
 import Image from 'next/image';
+import SupportAgentIcon from '@mui/icons-material/SupportAgent';
+import HelpCenterIcon from '@mui/icons-material/HelpCenter';
 import { useEffect, useState } from 'react';
 import useSWR from 'swr';
 import styles from '../../styles/Home.module.css';
@@ -223,6 +225,18 @@ const MerkleMintComponent = ({title, description, mintMethod, counterMethod, max
                     </>
                 )}
                 {error && <Alert variant='outline' severity="warning" onClose={() => {setError("")}}>{error}</Alert>}
+                <Paper sx={{padding: '10px', backgroundColor:'#171717', marginTop: '50px'}}>
+                    <Typography variant="h6" sx={{padding: '0px 20px', marginBottom: '10px'}}>
+                        <SupportAgentIcon sx={{marginBottom: '-4px'}}/> Support
+                    </Typography>
+                    <Typography variant="body1" color="#cdcdcd" sx={{padding: '0px 20px', marginBottom: '15px'}}>
+                    ○ If your transaction is stuck for a longer time (> 2 min), try refreshing the page. You can also check your wallet to know the transaction status.
+                    </Typography>
+                    <Typography variant="body1" color="#cdcdcd" sx={{padding: '0px 20px', marginBottom: '15px'}}>
+                    ○ For any issues, reach out to us on our <Button href='https://discord.com/invite/CnrPy9VKZz' variant="text" sx={{padding: 0, marginLeft: '0px'}} target="_blank">[discord]</Button> and raise a ticket. We will reach out to you soon.
+                    </Typography>
+
+                </Paper>
             </Grid>
             <Grid item xs={0} md={1} lg={2}></Grid>
         </>

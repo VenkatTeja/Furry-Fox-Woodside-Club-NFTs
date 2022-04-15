@@ -21,7 +21,8 @@ const Offset = styled("div")(({ theme }) => theme.mixins.toolbar);
 
 export let navLinks = [
   { title: 'About', path: 'https://furryfoxwoodside.club/', target: '_blank' },
-  { title: 'How to Mint?', path: 'https://bit.ly/3xgbZAH', target: '_blank' }
+  { title: 'How to Mint?', path: 'https://bit.ly/3xgbZAH', target: '_blank' },
+  { title: 'Contact us', path: 'https://discord.com/invite/CnrPy9VKZz', target: '_blank' }
 ];
 
 
@@ -46,7 +47,7 @@ const Header = () => {
         })
         if(!containsYourNFTsLink) {
           let chain = process.env.NEXT_PUBLIC_ENVIRONMENT == 'development' ? 'MUMBAI' : 'MATIC'
-          navLinks.push(
+          navLinks.splice(2, 0,
             { title: 'Your NFTs', path: `https://${openseaLink}/${account}?search[chains][0]=${chain}`,
             target: '_blank'},
           )
