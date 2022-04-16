@@ -157,12 +157,9 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
       <Alert severity="info">Public sale is open now</Alert>
     </Paper>
     <Paper sx={{padding: '10px', backgroundColor:'#171717', marginBottom: '30px'}}>
-      <Alert severity="info" variant='outline'>Important Information</Alert>
+      <Alert severity="info" variant='outline'>All our NFTs are FREE!</Alert>
       <Typography variant="body1" color="#cdcdcd" sx={{padding: '0px 20px', marginBottom: '15px'}}>
-      If you are experiencing any difficulties in minting OR are not comfortable swapping $Matic to wETH. Please transfer 0.04 eth for each NFT to our wallet and we will airdrop NFTs to your wallet. Use this <Button href='https://forms.gle/WgJYr8fxr7efp4cL7' variant="text" sx={{padding: 0, marginLeft: '0px'}} target="_blank">[form]</Button> to pay and register your request.
-      </Typography>
-      <Typography variant="body1" color="#cdcdcd" sx={{padding: '0px 20px', marginBottom: '15px', wordWrap: 'break-word'}}>
-        Our wallet address: 0xf63404268d61C68c387CfDee421E05d439F4F14C
+      Follow us on twitter <Button href='https://twitter.com/furryfoxWC' variant="text" sx={{padding: 0, marginLeft: '0px'}} target="_blank">@furryfoxWC</Button> and join our <Button href='https://discord.com/invite/CnrPy9VKZz' variant="text" sx={{padding: 0, marginLeft: '0px'}} target="_blank">discord</Button> for amazing surprises!!
       </Typography>
 
     </Paper>
@@ -194,7 +191,7 @@ const MintNFTCard = ({title, description, action, canMint, showNumToMint, numToM
                 This wallet owns {ownedNFTs} NFTs
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                {maxLimit} NFTs are allowed per wallet
+                {maxLimit} NFT is allowed per wallet
               </Typography>
             </Grid>
             <Grid item>
